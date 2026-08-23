@@ -1,9 +1,12 @@
 package com.devops.backend.modules.game.controller;
 
+import com.devops.backend.common.config.OpenApiConfig;
 import com.devops.backend.common.security.CurrentUser;
 import com.devops.backend.modules.game.dto.GameRequest;
 import com.devops.backend.modules.game.dto.GameResponse;
 import com.devops.backend.modules.game.service.GameService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin/games")
+@Tag(name = "Game administration", description = "Alta, modificación y baja lógica de videojuegos")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class AdminGameController {
 
     private final GameService gameService;

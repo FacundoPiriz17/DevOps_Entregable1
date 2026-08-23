@@ -1,8 +1,11 @@
 package com.devops.backend.modules.library.controller;
 
+import com.devops.backend.common.config.OpenApiConfig;
 import com.devops.backend.common.security.CurrentUser;
 import com.devops.backend.modules.library.dto.LibraryEntryResponse;
 import com.devops.backend.modules.library.service.LibraryService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -16,6 +19,8 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/library")
+@Tag(name = "Library", description = "Gestión de la biblioteca personal")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class LibraryController {
 
     private final LibraryService libraryService;

@@ -1,9 +1,12 @@
 package com.devops.backend.modules.session.controller;
 
+import com.devops.backend.common.config.OpenApiConfig;
 import com.devops.backend.common.security.CurrentUser;
 import com.devops.backend.modules.session.dto.PlaytimeResponse;
 import com.devops.backend.modules.session.dto.SessionResponse;
 import com.devops.backend.modules.session.service.SessionService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -12,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@Tag(name = "Sessions", description = "Inicio, finalización y consulta de sesiones de juego")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class SessionController {
 
     private final SessionService sessionService;
