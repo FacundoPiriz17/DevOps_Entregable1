@@ -1,7 +1,6 @@
 package com.devops.backend.modules.user.controller;
 
 import com.devops.backend.common.config.OpenApiConfig;
-import com.devops.backend.modules.user.dto.GameUsageItem;
 import com.devops.backend.modules.user.dto.UserBasicResponse;
 import com.devops.backend.modules.user.service.UserAdminService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -16,7 +15,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin/users")
-@Tag(name = "User administration", description = "Consulta y baja lógica de usuarios")
+@Tag(name = "User administration", description = "Consulta y baja lÃ³gica de usuarios")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class UserAdminController {
 
@@ -26,14 +25,14 @@ public class UserAdminController {
         this.userAdminService = userAdminService;
     }
 
+    @GetMapping
+    public List<UserBasicResponse> getUsers() {
+        return userAdminService.getUsers();
+    }
+
     @GetMapping("/{userId}")
     public UserBasicResponse getUser(@PathVariable Long userId) {
         return userAdminService.getUser(userId);
-    }
-
-    @GetMapping("/{userId}/usage")
-    public List<GameUsageItem> getUsage(@PathVariable Long userId) {
-        return userAdminService.getUsage(userId);
     }
 
     @PatchMapping("/{userId}/deactivate")

@@ -11,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,56 +18,31 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class UserAdminServiceTest {
+class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
 
     @InjectMocks
-    private UserAdminService userAdminService;
+    private UserService userService;
 
     @Test
-    void getUsers_returnsBasicInfoForAllUsers() {
-        User first = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        User second = new User("Admin", "admin@example.com", "hashed", Role.ADMIN);
-
-        when(userRepository.findAll()).thenReturn(List.of(first, second));
-
-        List<UserBasicResponse> response = userAdminService.getUsers();
-
-        assertThat(response).hasSize(2);
-        assertThat(response.get(0).email()).isEqualTo("julia@example.com");
-        assertThat(response.get(1).role()).isEqualTo("ADMIN");
-    }
-
-    @Test
-    void getUser_existingUser_returnsBasicInfo() {
+    void getCurrentUser_existingUser_returnsBasicInfo() {
         User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-        UserBasicResponse response = userAdminService.getUser(1L);
+        UserBasicResponse response = userService.getCurrentUser(1L);
 
         assertThat(response.name()).isEqualTo("Julia Fernandez");
         assertThat(response.email()).isEqualTo("julia@example.com");
-        assertThat(response.active()).isTrue();
     }
 
     @Test
-    void getUser_nonExistingUser_throwsNotFound() {
+    void getCurrentUser_nonExistingUser_throwsNotFound() {
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> userAdminService.getUser(1L))
+        assertThatThrownBy(() -> userService.getCurrentUser(1L))
                 .isInstanceOf(ApiException.class)
                 .hasMessageContaining("does not exist");
-    }
-
-    @Test
-    void deactivate_activeUser_marksInactive() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        UserBasicResponse response = userAdminService.deactivate(1L);
-
-        assertThat(response.active()).isFalse();
     }
 }

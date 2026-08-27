@@ -1,0 +1,26 @@
+package com.devops.backend.modules.user.service;
+
+import com.devops.backend.common.exception.ApiException;
+import com.devops.backend.modules.user.dto.UserBasicResponse;
+import com.devops.backend.modules.user.entity.User;
+import com.devops.backend.modules.user.repository.UserRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class UserService {
+
+    private final UserRepository userRepository;
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    @Transactional(readOnly = true)
+    public UserBasicResponse getCurrentUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "User does not exist"));
+
+        return UserBasicResponse.from(user);
+    }
+}

@@ -1,5 +1,15 @@
+/**
+ * @file page.js
+ * @brief Implementa la página pública inicial de PlayHub.
+ */
+
 import Image from "next/image";
 
+/**
+ * Renderiza la página de inicio disponible en la ruta raíz.
+ *
+ * @returns {JSX.Element} contenido principal de la página
+ */
 export default function Home() {
   return (
     <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
