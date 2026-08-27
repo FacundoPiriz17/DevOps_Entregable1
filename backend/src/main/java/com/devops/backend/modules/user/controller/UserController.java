@@ -27,6 +27,6 @@ public class UserController {
 
     @GetMapping("/me")
     public UserBasicResponse getCurrentUser(JwtAuthenticationToken auth) {
-        return userService.getCurrentUser(currentUser.idFrom(auth));
+        return userService.getCurrentUser(currentUser.emailFrom(auth));
     }
 }

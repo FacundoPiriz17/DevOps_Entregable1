@@ -13,32 +13,35 @@ import java.util.List;
 public class UserAdminService {
 
     private final UserRepository userRepository;
+    private final UserRoleService userRoleService;
 
-    public UserAdminService(UserRepository userRepository) {
+    public UserAdminService(UserRepository userRepository, UserRoleService userRoleService) {
         this.userRepository = userRepository;
+        this.userRoleService = userRoleService;
     }
 
     @Transactional(readOnly = true)
     public List<UserBasicResponse> getUsers() {
         return userRepository.findAll().stream()
-                .map(UserBasicResponse::from)
+                .map(user -> UserBasicResponse.from(user, userRoleService.roleOf(user.getEmail())))
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public UserBasicResponse getUser(Long userId) {
-        return UserBasicResponse.from(findUserOrThrow(userId));
+    public UserBasicResponse getUser(String email) {
+        User user = findUserOrThrow(email);
+        return UserBasicResponse.from(user, userRoleService.roleOf(email));
     }
 
     @Transactional
-    public UserBasicResponse deactivate(Long userId) {
-        User user = findUserOrThrow(userId);
+    public UserBasicResponse deactivate(String email) {
+        User user = findUserOrThrow(email);
         user.setActive(false);
-        return UserBasicResponse.from(user);
+        return UserBasicResponse.from(user, userRoleService.roleOf(email));
     }
 
-    private User findUserOrThrow(Long userId) {
-        return userRepository.findById(userId)
+    private User findUserOrThrow(String email) {
+        return userRepository.findById(email)
                 .orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "User does not exist"));
     }
 }

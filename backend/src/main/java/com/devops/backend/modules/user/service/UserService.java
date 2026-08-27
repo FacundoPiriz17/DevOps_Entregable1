@@ -11,16 +11,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserRoleService userRoleService;
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, UserRoleService userRoleService) {
         this.userRepository = userRepository;
+        this.userRoleService = userRoleService;
     }
 
     @Transactional(readOnly = true)
-    public UserBasicResponse getCurrentUser(Long userId) {
-        User user = userRepository.findById(userId)
+    public UserBasicResponse getCurrentUser(String email) {
+        User user = userRepository.findById(email)
                 .orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "User does not exist"));
-
-        return UserBasicResponse.from(user);
+        return UserBasicResponse.from(user, userRoleService.roleOf(email));
     }
 }

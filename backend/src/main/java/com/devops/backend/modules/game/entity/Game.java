@@ -7,99 +7,91 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
-import java.time.Instant;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "games")
+@Table(name = "juego")
 public class Game {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "identificador")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "nombre", nullable = false)
     private String name;
 
-    @Column(nullable = false)
-    private String genre;
-
-    @Column(nullable = false)
+    @Column(name = "descripcion", nullable = false)
     private String description;
 
+    @Column(name = "precio", nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @Column(name = "fecha_lanzamiento", nullable = false)
+    private LocalDate releaseDate;
+
+    @Column(name = "estudio", nullable = false)
+    private String studio;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private GameStatus status = GameStatus.ACTIVE;
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "estado", nullable = false, columnDefinition = "estado_juego")
+    private GameStatus status = GameStatus.PUBLICADO;
 
-    @Column(name = "registered_by_admin_id", nullable = false)
-    private Long registeredByAdminId;
+    @Column(name = "admin_registra", nullable = false)
+    private String registeredByAdminEmail;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+    @Column(name = "fecha_registro", nullable = false)
+    private LocalDate registeredAt = LocalDate.now();
 
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt = Instant.now();
+    @ManyToMany
+    @JoinTable(name = "juego_categoria",
+            joinColumns = @JoinColumn(name = "identificador_juego"),
+            inverseJoinColumns = @JoinColumn(name = "identificador_categoria"))
+    private Set<Category> categories = new LinkedHashSet<>();
 
     protected Game() {
     }
 
-    public Game(String name, String genre, String description, Long registeredByAdminId) {
+    public Game(String name, String description, BigDecimal price, LocalDate releaseDate,
+                String studio, GameStatus status, String registeredByAdminEmail) {
         this.name = name;
-        this.genre = genre;
         this.description = description;
-        this.registeredByAdminId = registeredByAdminId;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getGenre() {
-        return genre;
-    }
-
-    public void setGenre(String genre) {
-        this.genre = genre;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public GameStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(GameStatus status) {
+        this.price = price;
+        this.releaseDate = releaseDate;
+        this.studio = studio;
         this.status = status;
+        this.registeredByAdminEmail = registeredByAdminEmail;
     }
 
-    public Long getRegisteredByAdminId() {
-        return registeredByAdminId;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void touch() {
-        this.updatedAt = Instant.now();
+    public Long getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+    public LocalDate getReleaseDate() { return releaseDate; }
+    public void setReleaseDate(LocalDate releaseDate) { this.releaseDate = releaseDate; }
+    public String getStudio() { return studio; }
+    public void setStudio(String studio) { this.studio = studio; }
+    public GameStatus getStatus() { return status; }
+    public void setStatus(GameStatus status) { this.status = status; }
+    public String getRegisteredByAdminEmail() { return registeredByAdminEmail; }
+    public LocalDate getRegisteredAt() { return registeredAt; }
+    public Set<Category> getCategories() { return categories; }
+    public void replaceCategories(Set<Category> categories) {
+        this.categories.clear();
+        this.categories.addAll(categories);
     }
 }

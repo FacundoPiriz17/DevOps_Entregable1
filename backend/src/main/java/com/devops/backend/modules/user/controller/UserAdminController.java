@@ -30,13 +30,13 @@ public class UserAdminController {
         return userAdminService.getUsers();
     }
 
-    @GetMapping("/{userId}")
-    public UserBasicResponse getUser(@PathVariable Long userId) {
-        return userAdminService.getUser(userId);
+    @GetMapping("/{email}")
+    public UserBasicResponse getUser(@PathVariable String email) {
+        return userAdminService.getUser(email);
     }
 
-    @PatchMapping("/{userId}/deactivate")
-    public UserBasicResponse deactivate(@PathVariable Long userId) {
-        return userAdminService.deactivate(userId);
+    @PatchMapping("/{email}/deactivate")
+    public UserBasicResponse deactivate(@PathVariable String email) {
+        return userAdminService.deactivate(email);
     }
 }

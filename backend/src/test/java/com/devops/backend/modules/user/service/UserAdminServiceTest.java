@@ -1,74 +1,43 @@
 package com.devops.backend.modules.user.service;
 
 import com.devops.backend.common.exception.ApiException;
-import com.devops.backend.modules.user.dto.UserBasicResponse;
 import com.devops.backend.modules.user.entity.Role;
 import com.devops.backend.modules.user.entity.User;
 import com.devops.backend.modules.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class UserAdminServiceTest {
-
-    @Mock
-    private UserRepository userRepository;
-
-    @InjectMocks
-    private UserAdminService userAdminService;
+    private final UserRepository repository = mock(UserRepository.class);
+    private final UserRoleService roles = mock(UserRoleService.class);
+    private final UserAdminService service = new UserAdminService(repository, roles);
 
     @Test
-    void getUsers_returnsBasicInfoForAllUsers() {
-        User first = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        User second = new User("Admin", "admin@example.com", "hashed", Role.ADMIN);
-
-        when(userRepository.findAll()).thenReturn(List.of(first, second));
-
-        List<UserBasicResponse> response = userAdminService.getUsers();
-
-        assertThat(response).hasSize(2);
-        assertThat(response.get(0).email()).isEqualTo("julia@example.com");
-        assertThat(response.get(1).role()).isEqualTo("ADMIN");
+    void list_resolvesRoleFromProfileTables() {
+        User user = new User("Julia", "julia@example.com", "Uruguay");
+        when(repository.findAll()).thenReturn(List.of(user));
+        when(roles.roleOf("julia@example.com")).thenReturn(Role.USER);
+        assertThat(service.getUsers()).singleElement().extracting("role").isEqualTo("USER");
     }
 
     @Test
-    void getUser_existingUser_returnsBasicInfo() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        UserBasicResponse response = userAdminService.getUser(1L);
-
-        assertThat(response.name()).isEqualTo("Julia Fernandez");
-        assertThat(response.email()).isEqualTo("julia@example.com");
-        assertThat(response.active()).isTrue();
+    void deactivate_usesEmailAndKeepsLogicalDeletion() {
+        User user = new User("Julia", "julia@example.com", "Uruguay");
+        when(repository.findById("julia@example.com")).thenReturn(Optional.of(user));
+        when(roles.roleOf("julia@example.com")).thenReturn(Role.USER);
+        assertThat(service.deactivate("julia@example.com").active()).isFalse();
     }
 
     @Test
-    void getUser_nonExistingUser_throwsNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> userAdminService.getUser(1L))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("does not exist");
-    }
-
-    @Test
-    void deactivate_activeUser_marksInactive() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        UserBasicResponse response = userAdminService.deactivate(1L);
-
-        assertThat(response.active()).isFalse();
+    void get_unknownUserReturnsNotFound() {
+        when(repository.findById("missing@test")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.getUser("missing@test")).isInstanceOf(ApiException.class);
     }
 }
