@@ -2,15 +2,18 @@ package com.devops.backend.modules.auth.service;
 
 import com.devops.backend.common.exception.ApiException;
 import com.devops.backend.common.security.JwtService;
-import com.devops.backend.modules.auth.dto.AuthResponse;
 import com.devops.backend.modules.auth.dto.LoginRequest;
 import com.devops.backend.modules.auth.dto.RegisterRequest;
+import com.devops.backend.modules.auth.entity.Login;
+import com.devops.backend.modules.auth.repository.LoginRepository;
+import com.devops.backend.modules.user.entity.GeneralUser;
 import com.devops.backend.modules.user.entity.Role;
 import com.devops.backend.modules.user.entity.User;
+import com.devops.backend.modules.user.repository.GeneralUserRepository;
 import com.devops.backend.modules.user.repository.UserRepository;
+import com.devops.backend.modules.user.service.UserRoleService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -21,92 +24,85 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
+    @Mock UserRepository userRepository;
+    @Mock LoginRepository loginRepository;
+    @Mock GeneralUserRepository generalUserRepository;
+    @Mock UserRoleService userRoleService;
+    @Mock PasswordEncoder passwordEncoder;
+    @Mock JwtService jwtService;
 
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private JwtService jwtService;
-
-    @InjectMocks
-    private AuthService authService;
+    private AuthService service() {
+        return new AuthService(userRepository, loginRepository, generalUserRepository,
+                userRoleService, passwordEncoder, jwtService);
+    }
 
     @Test
-    void register_createsUserAndReturnsToken() {
-        RegisterRequest request = new RegisterRequest("Julia Fernandez", "julia@example.com", "ContraseniaSegura123");
-        when(userRepository.existsByEmail("julia@example.com")).thenReturn(false);
-        when(passwordEncoder.encode("ContraseniaSegura123")).thenReturn("hashed");
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(jwtService.generateToken(any(User.class))).thenReturn("token-123");
+    void register_createsProfileCredentialsAndGeneralRoleAtomically() {
+        RegisterRequest request = new RegisterRequest(
+                "Julia", " JULIA@example.com ", "Uruguay", "Password123");
+        when(userRepository.existsById("julia@example.com")).thenReturn(false);
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(passwordEncoder.encode("Password123")).thenReturn("hashed");
+        when(jwtService.generateToken(any(User.class), org.mockito.ArgumentMatchers.eq(Role.USER)))
+                .thenReturn("token");
 
-        AuthResponse response = authService.register(request);
+        var response = service().register(request);
 
-        assertThat(response.token()).isEqualTo("token-123");
         assertThat(response.email()).isEqualTo("julia@example.com");
+        assertThat(response.country()).isEqualTo("Uruguay");
         assertThat(response.role()).isEqualTo("USER");
+        verify(loginRepository).save(any(Login.class));
+        verify(generalUserRepository).save(any(GeneralUser.class));
     }
 
     @Test
-    void register_emailAlreadyUsed_throwsConflict() {
-        RegisterRequest request = new RegisterRequest("Julia Fernandez", "julia@example.com", "ContraseniaSegura123");
-        when(userRepository.existsByEmail("julia@example.com")).thenReturn(true);
-
-        assertThatThrownBy(() -> authService.register(request))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("already in use");
-
-        verify(userRepository, org.mockito.Mockito.never()).save(any());
+    void register_existingEmailReturnsConflict() {
+        RegisterRequest request = new RegisterRequest("Julia", "julia@example.com", "Uruguay", "Password123");
+        when(userRepository.existsById("julia@example.com")).thenReturn(true);
+        assertThatThrownBy(() -> service().register(request)).isInstanceOf(ApiException.class);
+        verify(loginRepository, never()).save(any());
     }
 
     @Test
-    void login_validCredentials_returnsToken() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        LoginRequest request = new LoginRequest("julia@example.com", "ContraseniaSegura123");
-        when(userRepository.findByEmail("julia@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("ContraseniaSegura123", "hashed")).thenReturn(true);
-        when(jwtService.generateToken(user)).thenReturn("token-123");
+    void login_readsPasswordFromLoginAndRoleFromProfileTable() {
+        User user = new User("Julia", "julia@example.com", "Uruguay");
+        Login login = new Login("julia@example.com", "hashed");
+        when(userRepository.findById("julia@example.com")).thenReturn(Optional.of(user));
+        when(loginRepository.findById("julia@example.com")).thenReturn(Optional.of(login));
+        when(passwordEncoder.matches("Password123", "hashed")).thenReturn(true);
+        when(userRoleService.roleOf("julia@example.com")).thenReturn(Role.USER);
+        when(jwtService.generateToken(user, Role.USER)).thenReturn("token");
 
-        AuthResponse response = authService.login(request);
-
-        assertThat(response.token()).isEqualTo("token-123");
+        assertThat(service().login(new LoginRequest("julia@example.com", "Password123")).token())
+                .isEqualTo("token");
     }
 
     @Test
-    void login_wrongPassword_throwsBadCredentials() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        LoginRequest request = new LoginRequest("julia@example.com", "wrong-password");
-        when(userRepository.findByEmail("julia@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("wrong-password", "hashed")).thenReturn(false);
-
-        assertThatThrownBy(() -> authService.login(request)).isInstanceOf(BadCredentialsException.class);
+    void login_wrongPasswordReturnsBadCredentials() {
+        User user = new User("Julia", "julia@example.com", "Uruguay");
+        when(userRepository.findById("julia@example.com")).thenReturn(Optional.of(user));
+        when(loginRepository.findById("julia@example.com"))
+                .thenReturn(Optional.of(new Login("julia@example.com", "hashed")));
+        when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
+        assertThatThrownBy(() -> service().login(new LoginRequest("julia@example.com", "wrong")))
+                .isInstanceOf(BadCredentialsException.class);
     }
 
     @Test
-    void login_unknownEmail_throwsBadCredentials() {
-        LoginRequest request = new LoginRequest("unknown@example.com", "whatever123");
-        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> authService.login(request)).isInstanceOf(BadCredentialsException.class);
-    }
-
-    @Test
-    void login_inactiveAccount_throwsForbidden() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
+    void login_inactiveProfileReturnsForbidden() {
+        User user = new User("Julia", "julia@example.com", "Uruguay");
         user.setActive(false);
-        LoginRequest request = new LoginRequest("julia@example.com", "ContraseniaSegura123");
-        when(userRepository.findByEmail("julia@example.com")).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches("ContraseniaSegura123", "hashed")).thenReturn(true);
-
-        assertThatThrownBy(() -> authService.login(request))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("deactivated");
+        when(userRepository.findById("julia@example.com")).thenReturn(Optional.of(user));
+        when(loginRepository.findById("julia@example.com"))
+                .thenReturn(Optional.of(new Login("julia@example.com", "hashed")));
+        when(passwordEncoder.matches("Password123", "hashed")).thenReturn(true);
+        assertThatThrownBy(() -> service().login(new LoginRequest("julia@example.com", "Password123")))
+                .isInstanceOf(ApiException.class).hasMessageContaining("deactivated");
     }
 }

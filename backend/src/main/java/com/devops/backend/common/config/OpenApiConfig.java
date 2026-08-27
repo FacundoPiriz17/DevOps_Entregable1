@@ -13,11 +13,11 @@ public class OpenApiConfig {
     public static final String BEARER_AUTH = "bearerAuth";
 
     @Bean
-    public OpenAPI gameStoreOpenApi() {
+    public OpenAPI playHubOpenApi() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Game Store API")
-                        .description("API REST para la gestión de usuarios, videojuegos, bibliotecas y sesiones de juego")
+                        .title("PlayHub API")
+                        .description("API REST de PlayHub para catálogo, usuarios, biblioteca, carrito y deseados")
                         .version("v1"))
                 .components(new Components()
                         .addSecuritySchemes(BEARER_AUTH, new SecurityScheme()

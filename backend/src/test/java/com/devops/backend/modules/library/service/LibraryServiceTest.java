@@ -4,16 +4,16 @@ import com.devops.backend.common.exception.ApiException;
 import com.devops.backend.modules.game.entity.Game;
 import com.devops.backend.modules.game.entity.GameStatus;
 import com.devops.backend.modules.game.repository.GameRepository;
-import com.devops.backend.modules.library.dto.LibraryEntryResponse;
 import com.devops.backend.modules.library.entity.LibraryEntry;
 import com.devops.backend.modules.library.repository.LibraryEntryRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
-import java.lang.reflect.Field;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,87 +24,58 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LibraryServiceTest {
+    @Mock LibraryEntryRepository repository;
+    @Mock GameRepository gameRepository;
 
-    @Mock
-    private LibraryEntryRepository libraryEntryRepository;
-
-    @Mock
-    private GameRepository gameRepository;
-
-    @InjectMocks
-    private LibraryService libraryService;
+    private LibraryService service() { return new LibraryService(repository, gameRepository); }
 
     @Test
-    void addToLibrary_activeGameNotYetAdded_addsEntry() throws Exception {
-        Game game = new Game("Death Stranding", "Aventura", "desc", 1L);
-        setId(game, 10L);
+    void add_publishedGameCreatesPurchase() {
+        Game game = game(GameStatus.PUBLICADO);
         when(gameRepository.findById(10L)).thenReturn(Optional.of(game));
-        when(libraryEntryRepository.existsByUserIdAndGameId(1L, 10L)).thenReturn(false);
-        when(libraryEntryRepository.save(any(LibraryEntry.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(repository.existsByIdUserEmailAndIdGameId("user@test", 10L)).thenReturn(false);
+        when(repository.save(any(LibraryEntry.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        LibraryEntryResponse response = libraryService.addToLibrary(1L, 10L);
-
-        assertThat(response.gameId()).isEqualTo(10L);
-        assertThat(response.name()).isEqualTo("Death Stranding");
+        var response = service().addToLibrary("user@test", 10L);
+        assertThat(response.name()).isEqualTo("Hades");
+        assertThat(response.favorite()).isFalse();
     }
 
     @Test
-    void addToLibrary_gameNotFound_throwsNotFound() {
-        when(gameRepository.findById(10L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> libraryService.addToLibrary(1L, 10L))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("does not exist");
+    void add_pausedGameReturnsConflict() {
+        when(gameRepository.findById(10L)).thenReturn(Optional.of(game(GameStatus.PAUSADO)));
+        assertThatThrownBy(() -> service().addToLibrary("user@test", 10L))
+                .isInstanceOf(ApiException.class).hasMessageContaining("not available");
     }
 
     @Test
-    void addToLibrary_inactiveGame_throwsConflict() {
-        Game game = new Game("Old Game", "Genre", "desc", 1L);
-        game.setStatus(GameStatus.INACTIVE);
-        when(gameRepository.findById(10L)).thenReturn(Optional.of(game));
-
-        assertThatThrownBy(() -> libraryService.addToLibrary(1L, 10L))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("no longer available");
+    void add_duplicateReturnsConflict() {
+        when(gameRepository.findById(10L)).thenReturn(Optional.of(game(GameStatus.PUBLICADO)));
+        when(repository.existsByIdUserEmailAndIdGameId("user@test", 10L)).thenReturn(true);
+        assertThatThrownBy(() -> service().addToLibrary("user@test", 10L))
+                .isInstanceOf(ApiException.class);
     }
 
     @Test
-    void addToLibrary_alreadyInLibrary_throwsConflict() {
-        Game game = new Game("Death Stranding", "Aventura", "desc", 1L);
-        when(gameRepository.findById(10L)).thenReturn(Optional.of(game));
-        when(libraryEntryRepository.existsByUserIdAndGameId(1L, 10L)).thenReturn(true);
-
-        assertThatThrownBy(() -> libraryService.addToLibrary(1L, 10L))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("already in the user's library");
-    }
-
-    @Test
-    void listLibrary_returnsEntriesJoinedWithGameInfo() throws Exception {
-        LibraryEntry entry = new LibraryEntry(1L, 10L);
-        Game game = new Game("Death Stranding", "Aventura", "desc", 1L);
-        setId(game, 10L);
-        when(libraryEntryRepository.findByUserId(1L)).thenReturn(List.of(entry));
+    void list_mapsEntriesToGames() {
+        LibraryEntry entry = new LibraryEntry("user@test", 10L);
+        Game game = game(GameStatus.PUBLICADO);
+        ReflectionTestUtils.setField(game, "id", 10L);
+        when(repository.findByIdUserEmail("user@test")).thenReturn(List.of(entry));
         when(gameRepository.findAllById(List.of(10L))).thenReturn(List.of(game));
-
-        List<LibraryEntryResponse> library = libraryService.listLibrary(1L);
-
-        assertThat(library).hasSize(1);
-        assertThat(library.get(0).name()).isEqualTo("Death Stranding");
+        assertThat(service().listLibrary("user@test")).hasSize(1);
     }
 
     @Test
-    void requireLibraryEntry_notInLibrary_throwsForbidden() {
-        when(libraryEntryRepository.findByUserIdAndGameId(1L, 10L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> libraryService.requireLibraryEntry(1L, 10L))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("not available in your library");
+    void setFavorite_updatesExistingEntry() {
+        LibraryEntry entry = new LibraryEntry("user@test", 10L);
+        when(repository.findByIdUserEmailAndIdGameId("user@test", 10L)).thenReturn(Optional.of(entry));
+        when(gameRepository.findById(10L)).thenReturn(Optional.of(game(GameStatus.PUBLICADO)));
+        assertThat(service().setFavorite("user@test", 10L, true).favorite()).isTrue();
     }
 
-    private static void setId(Game game, Long id) throws Exception {
-        Field field = Game.class.getDeclaredField("id");
-        field.setAccessible(true);
-        field.set(game, id);
+    private static Game game(GameStatus status) {
+        return new Game("Hades", "Roguelike", new BigDecimal("24.99"), LocalDate.of(2020, 9, 17),
+                "Supergiant Games", status, "admin@test");
     }
 }

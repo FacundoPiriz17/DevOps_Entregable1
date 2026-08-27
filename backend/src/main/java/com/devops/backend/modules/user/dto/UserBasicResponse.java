@@ -1,12 +1,20 @@
 package com.devops.backend.modules.user.dto;
 
+import com.devops.backend.modules.user.entity.Role;
 import com.devops.backend.modules.user.entity.User;
-import java.time.Instant;
 
-public record UserBasicResponse(Long id, String name, String email, String role, boolean active, Instant createdAt) {
+import java.time.LocalDate;
 
-    public static UserBasicResponse from(User user) {
-        return new UserBasicResponse(user.getId(), user.getName(), user.getEmail(), user.getRole().name(),
-                user.isActive(), user.getCreatedAt());
+public record UserBasicResponse(
+        String name,
+        String email,
+        String country,
+        String role,
+        boolean active,
+        LocalDate registeredAt) {
+
+    public static UserBasicResponse from(User user, Role role) {
+        return new UserBasicResponse(user.getName(), user.getEmail(), user.getCountry(), role.name(),
+                user.isActive(), user.getRegisteredAt());
     }
 }

@@ -35,7 +35,7 @@ public class AdminGameController {
 
     @PostMapping
     public ResponseEntity<GameResponse> create(@Valid @RequestBody GameRequest request, JwtAuthenticationToken auth) {
-        GameResponse created = gameService.create(request, currentUser.idFrom(auth));
+        GameResponse created = gameService.create(request, currentUser.emailFrom(auth));
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 

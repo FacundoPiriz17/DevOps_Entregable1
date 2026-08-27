@@ -2,81 +2,44 @@ package com.devops.backend.modules.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "users")
+@Table(name = "usuario")
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private String name;
-
-    @Column(nullable = false, unique = true)
+    @Column(name = "email", nullable = false)
     private String email;
 
-    @Column(name = "password_hash", nullable = false)
-    private String passwordHash;
+    @Column(name = "nombre", nullable = false)
+    private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
+    @Column(name = "pais", nullable = false)
+    private String country;
 
-    @Column(nullable = false)
+    @Column(name = "activo", nullable = false)
     private boolean active = true;
 
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+    @Column(name = "fecha_registro", nullable = false)
+    private LocalDate registeredAt = LocalDate.now();
 
     protected User() {
     }
 
-    public User(String name, String email, String passwordHash, Role role) {
+    public User(String name, String email, String country) {
         this.name = name;
         this.email = email;
-        this.passwordHash = passwordHash;
-        this.role = role;
+        this.country = country;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    public String getEmail() { return email; }
+    public String getName() { return name; }
+    public String getCountry() { return country; }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
+    public LocalDate getRegisteredAt() { return registeredAt; }
 }

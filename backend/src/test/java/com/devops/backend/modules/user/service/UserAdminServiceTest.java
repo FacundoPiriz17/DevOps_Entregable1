@@ -1,105 +1,43 @@
 package com.devops.backend.modules.user.service;
 
 import com.devops.backend.common.exception.ApiException;
-import com.devops.backend.modules.game.entity.Game;
-import com.devops.backend.modules.game.repository.GameRepository;
-import com.devops.backend.modules.session.repository.GameSessionRepository;
-import com.devops.backend.modules.user.dto.GameUsageItem;
-import com.devops.backend.modules.user.dto.UserBasicResponse;
 import com.devops.backend.modules.user.entity.Role;
 import com.devops.backend.modules.user.entity.User;
 import com.devops.backend.modules.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class UserAdminServiceTest {
-
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private GameSessionRepository gameSessionRepository;
-
-    @Mock
-    private GameRepository gameRepository;
-
-    @InjectMocks
-    private UserAdminService userAdminService;
+    private final UserRepository repository = mock(UserRepository.class);
+    private final UserRoleService roles = mock(UserRoleService.class);
+    private final UserAdminService service = new UserAdminService(repository, roles);
 
     @Test
-    void getUser_existingUser_returnsBasicInfo() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        UserBasicResponse response = userAdminService.getUser(1L);
-
-        assertThat(response.name()).isEqualTo("Julia Fernandez");
-        assertThat(response.email()).isEqualTo("julia@example.com");
-        assertThat(response.active()).isTrue();
+    void list_resolvesRoleFromProfileTables() {
+        User user = new User("Julia", "julia@example.com", "Uruguay");
+        when(repository.findAll()).thenReturn(List.of(user));
+        when(roles.roleOf("julia@example.com")).thenReturn(Role.USER);
+        assertThat(service.getUsers()).singleElement().extracting("role").isEqualTo("USER");
     }
 
     @Test
-    void getUser_nonExistingUser_throwsNotFound() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> userAdminService.getUser(1L))
-                .isInstanceOf(ApiException.class)
-                .hasMessageContaining("does not exist");
+    void deactivate_usesEmailAndKeepsLogicalDeletion() {
+        User user = new User("Julia", "julia@example.com", "Uruguay");
+        when(repository.findById("julia@example.com")).thenReturn(Optional.of(user));
+        when(roles.roleOf("julia@example.com")).thenReturn(Role.USER);
+        assertThat(service.deactivate("julia@example.com").active()).isFalse();
     }
 
     @Test
-    void getUsage_returnsPlaytimePerGame() throws Exception {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        GameSessionRepository.GameUsageProjection projection = mockProjection(10L, 165L);
-        when(gameSessionRepository.sumDurationMinutesGroupedByGameForUser(1L)).thenReturn(List.of(projection));
-
-        Game game = new Game("Death Stranding", "Aventura", "desc", 1L);
-        setGameId(game, 10L);
-        when(gameRepository.findAllById(List.of(10L))).thenReturn(List.of(game));
-
-        List<GameUsageItem> usage = userAdminService.getUsage(1L);
-
-        assertThat(usage).hasSize(1);
-        assertThat(usage.get(0).gameId()).isEqualTo(10L);
-        assertThat(usage.get(0).gameName()).isEqualTo("Death Stranding");
-        assertThat(usage.get(0).totalMinutes()).isEqualTo(165L);
-    }
-
-    @Test
-    void deactivate_activeUser_marksInactive() {
-        User user = new User("Julia Fernandez", "julia@example.com", "hashed", Role.USER);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-
-        UserBasicResponse response = userAdminService.deactivate(1L);
-
-        assertThat(response.active()).isFalse();
-    }
-
-    private static GameSessionRepository.GameUsageProjection mockProjection(Long gameId, Long totalMinutes) {
-        GameSessionRepository.GameUsageProjection projection =
-                org.mockito.Mockito.mock(GameSessionRepository.GameUsageProjection.class);
-        when(projection.getGameId()).thenReturn(gameId);
-        when(projection.getTotalMinutes()).thenReturn(totalMinutes);
-        return projection;
-    }
-
-    private static void setGameId(Game game, Long id) throws Exception {
-        Field field = Game.class.getDeclaredField("id");
-        field.setAccessible(true);
-        field.set(game, id);
+    void get_unknownUserReturnsNotFound() {
+        when(repository.findById("missing@test")).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.getUser("missing@test")).isInstanceOf(ApiException.class);
     }
 }

@@ -1,52 +1,34 @@
 package com.devops.backend.modules.library.entity;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
-@Table(name = "library_entries")
+@Table(name = "biblioteca")
 public class LibraryEntry {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EmbeddedId
+    private LibraryEntryId id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Column(name = "fecha_compra", nullable = false)
+    private LocalDate purchasedAt = LocalDate.now();
 
-    @Column(name = "game_id", nullable = false)
-    private Long gameId;
-
-    @Column(name = "added_at", nullable = false)
-    private Instant addedAt = Instant.now();
+    @Column(name = "es_favorito", nullable = false)
+    private boolean favorite;
 
     protected LibraryEntry() {
     }
 
-    public LibraryEntry(Long userId, Long gameId) {
-        this.userId = userId;
-        this.gameId = gameId;
+    public LibraryEntry(String userEmail, Long gameId) {
+        this.id = new LibraryEntryId(gameId, userEmail);
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public Long getUserId() {
-        return userId;
-    }
-
-    public Long getGameId() {
-        return gameId;
-    }
-
-    public Instant getAddedAt() {
-        return addedAt;
-    }
+    public LibraryEntryId getId() { return id; }
+    public LocalDate getPurchasedAt() { return purchasedAt; }
+    public boolean isFavorite() { return favorite; }
+    public void setFavorite(boolean favorite) { this.favorite = favorite; }
 }
