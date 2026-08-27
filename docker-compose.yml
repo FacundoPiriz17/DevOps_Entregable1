@@ -51,7 +51,7 @@ services:
     build: ./frontend
 
     ports:
-      - "3000:3000"
+      - "6996:9669"
 
     develop:
       watch:
