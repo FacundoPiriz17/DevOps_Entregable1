@@ -11,3 +11,6 @@ logs/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Generated documentation
+docs/generated/
