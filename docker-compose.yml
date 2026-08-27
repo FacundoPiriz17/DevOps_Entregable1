@@ -1,21 +1,19 @@
 name: playhub-dev
 
 services:
-
   db:
     image: postgres:18-alpine
-    container_name: playhub-db
 
     environment:
       POSTGRES_DB: devops_db
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
 
     ports:
       - "5433:5432"
 
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
 
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d devops_db"]
@@ -23,29 +21,18 @@ services:
       timeout: 5s
       retries: 10
 
-
   backend:
-    container_name: playhub-backend
-
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    build: ./backend
 
     ports:
       - "8080:8080"
 
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/devops_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-
-      ADMIN_EMAIL: ${ADMIN_EMAIL}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
-
-      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      DB_URL: jdbc:postgresql://db:5432/devops_db
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?ADMIN_EMAIL is required}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD is required}
 
     depends_on:
       db:
@@ -60,25 +47,11 @@ services:
         - action: rebuild
           path: ./backend/pom.xml
 
-
   frontend:
-    container_name: playhub-frontend
-
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
+    build: ./frontend
 
     ports:
       - "3000:3000"
-
-    environment:
-      NODE_ENV: development
-      WATCHPACK_POLLING: "true"
-      NEXT_TELEMETRY_DISABLED: "1"
-      NEXT_PUBLIC_API_URL: http://localhost:8080
-
-    depends_on:
-      - backend
 
     develop:
       watch:
@@ -96,7 +69,6 @@ services:
 
         - action: rebuild
           path: ./frontend/package-lock.json
-
 
 volumes:
   postgres_data:
