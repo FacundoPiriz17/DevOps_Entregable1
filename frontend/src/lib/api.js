@@ -1,5 +1,3 @@
-import { sessionStorage } from "./storage";
-
 const API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080").replace(/\/$/, "");
 
 const defaultMessages = {
@@ -35,12 +33,10 @@ export class ApiError extends Error {
   }
 }
 
-async function request(path, { method = "GET", body, auth = true } = {}) {
+async function request(path, { method = "GET", body, notifyUnauthorized = true } = {}) {
   const headers = { Accept: "application/json" };
-  const token = sessionStorage.token();
 
   if (body !== undefined) headers["Content-Type"] = "application/json";
-  if (auth && token) headers.Authorization = `Bearer ${token}`;
 
   let response;
 
@@ -48,13 +44,14 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
     response = await fetch(`${API_URL}${path}`, {
       method,
       headers,
+      credentials: "include",
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(0, "NETWORK_ERROR", defaultMessages[0]);
   }
 
-  if (response.status === 401 && auth && token && typeof window !== "undefined") {
+  if (response.status === 401 && notifyUnauthorized && typeof window !== "undefined") {
     window.dispatchEvent(new Event("playhub:unauthorized"));
   }
 
@@ -81,11 +78,12 @@ async function request(path, { method = "GET", body, auth = true } = {}) {
 
 export const api = {
   auth: {
-    login: (credentials) => request("/api/auth/login", { method: "POST", body: credentials, auth: false }),
-    register: (data) => request("/api/auth/register", { method: "POST", body: data, auth: false }),
+    login: (credentials) => request("/api/auth/login", { method: "POST", body: credentials, notifyUnauthorized: false }),
+    register: (data) => request("/api/auth/register", { method: "POST", body: data, notifyUnauthorized: false }),
+    logout: () => request("/api/auth/logout", { method: "POST", notifyUnauthorized: false }),
   },
   users: {
-    me: () => request("/api/users/me"),
+    me: ({ notifyUnauthorized = true } = {}) => request("/api/users/me", { notifyUnauthorized }),
   },
   games: {
     list: () => request("/api/games"),

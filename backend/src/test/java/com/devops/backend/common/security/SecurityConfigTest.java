@@ -13,6 +13,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
+import jakarta.servlet.http.Cookie;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +35,19 @@ class SecurityConfigTest {
                 .contains("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
         assertThat(configuration.getAllowedHeaders())
                 .contains("Authorization", "Content-Type", "Accept");
-        assertThat(configuration.getAllowCredentials()).isFalse();
+        assertThat(configuration.getAllowCredentials()).isTrue();
+    }
+
+    @Test
+    void bearerTokenResolver_acceptsHeaderAndHttpOnlyCookieTransport() {
+        JwtCookieBearerTokenResolver resolver = new JwtCookieBearerTokenResolver();
+        MockHttpServletRequest cookieRequest = new MockHttpServletRequest("GET", "/api/games");
+        cookieRequest.setCookies(new Cookie(JwtCookieBearerTokenResolver.COOKIE_NAME, "cookie-token"));
+        assertThat(resolver.resolve(cookieRequest)).isEqualTo("cookie-token");
+
+        MockHttpServletRequest headerRequest = new MockHttpServletRequest("GET", "/api/games");
+        headerRequest.addHeader(HttpHeaders.AUTHORIZATION, "Bearer header-token");
+        assertThat(resolver.resolve(headerRequest)).isEqualTo("header-token");
     }
 
     @Test

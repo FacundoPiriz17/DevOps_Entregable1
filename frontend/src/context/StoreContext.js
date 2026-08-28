@@ -25,6 +25,7 @@ export function StoreProvider({ children }) {
     }
 
     setLoading(true);
+    let loadError = null;
     try {
       const [nextCart, nextLibrary, nextWishlist] = await Promise.all([
         api.cart.list(),
@@ -35,10 +36,10 @@ export function StoreProvider({ children }) {
       setLibrary(nextLibrary);
       setWishlist(nextWishlist);
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setLoading(false);
+      loadError = error;
     }
+    setLoading(false);
+    if (loadError) notify(loadError.message, "error");
   }, [isUser, notify]);
 
   useEffect(() => {

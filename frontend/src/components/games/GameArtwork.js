@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { LuGamepad2 } from "react-icons/lu";
 import { gameImage, gameImageAlt } from "@/lib/games";
 import { cn } from "@/lib/cn";
@@ -39,32 +40,34 @@ export default function GameArtwork({ game, type = "portada", className = "", pr
       aria-label={gameImageAlt(game, type)}
     >
       {framedArtwork && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <Image
           aria-hidden="true"
           alt=""
           className="absolute inset-0 size-full scale-115 object-cover opacity-45 blur-xl"
+          fill
+          quality={45}
+          sizes={type === "banner" ? "100vw" : "300px"}
           src={image}
         />
       )}
-      {/* Native img keeps arbitrary database URLs working and lets us provide a real error fallback. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         alt=""
         className={cn(
-          "relative size-full transition-opacity duration-200",
+          "z-1 transition-opacity duration-200",
           framedArtwork ? (lowResolution ? "object-contain p-[7%]" : "object-contain p-[4%]") : "object-cover",
         )}
-        decoding="async"
-        fetchPriority={priority ? "high" : "auto"}
-        loading={priority ? "eager" : "lazy"}
+        fill
         onError={() => setFailedUrl(image)}
         onLoad={(event) => setLoadedImage({
           url: image,
           width: event.currentTarget.naturalWidth,
           height: event.currentTarget.naturalHeight,
         })}
+        priority={priority}
         referrerPolicy="no-referrer"
+        sizes={type === "banner"
+          ? "(max-width: 768px) 100vw, 75vw"
+          : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"}
         src={image}
       />
     </div>

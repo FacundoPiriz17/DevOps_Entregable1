@@ -41,13 +41,17 @@ export default function CatalogPage() {
       return matchesText && matchesCategory;
     });
 
-    return [...filtered].sort((first, second) => {
+    const compareGames = (first, second) => {
       if (sort === "name") return first.name.localeCompare(second.name, "es");
       if (sort === "price-low") return Number(first.price) - Number(second.price);
       if (sort === "price-high") return Number(second.price) - Number(first.price);
       if (sort === "newest") return String(second.releaseDate).localeCompare(String(first.releaseDate));
       return Number(second.available) - Number(first.available);
-    });
+    };
+
+    return typeof filtered.toSorted === "function"
+      ? filtered.toSorted(compareGames)
+      : filtered.slice().sort(compareGames);
   }, [games, query, category, sort]);
 
   if (gamesQuery.isPending || categoriesQuery.isPending) return <LoadingState label="Buscando grandes juegos..." />;

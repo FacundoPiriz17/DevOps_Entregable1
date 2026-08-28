@@ -1,8 +1,10 @@
-export const formatPrice = (value) => new Intl.NumberFormat("es-UY", {
+const priceFormatter = new Intl.NumberFormat("es-UY", {
   style: "currency",
   currency: "USD",
   minimumFractionDigits: 2,
-}).format(Number(value || 0));
+});
+
+export const formatPrice = (value) => priceFormatter.format(Number(value || 0));
 
 export const formatDate = (value) => {
   if (!value) return "Sin fecha";

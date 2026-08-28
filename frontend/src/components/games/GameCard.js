@@ -31,24 +31,26 @@ export default function GameCard({ game }) {
 
   const handleCart = async () => {
     setCartLoading(true);
+    let actionError = null;
     try {
       await addToCart(game.id);
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setCartLoading(false);
+      actionError = error;
     }
+    setCartLoading(false);
+    if (actionError) notify(actionError.message, "error");
   };
 
   const handleWishlist = async () => {
     setWishLoading(true);
+    let actionError = null;
     try {
       await toggleWishlist(game.id);
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setWishLoading(false);
+      actionError = error;
     }
+    setWishLoading(false);
+    if (actionError) notify(actionError.message, "error");
   };
 
   return (

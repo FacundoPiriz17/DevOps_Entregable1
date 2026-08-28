@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -15,17 +15,13 @@ import { loginSchema } from "@/lib/authSchemas";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { authenticated, ready, login } = useAuth();
+  const { login } = useAuth();
   const { notify } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
-
-  useEffect(() => {
-    if (ready && authenticated) router.replace("/catalog");
-  }, [ready, authenticated, router]);
 
   const onSubmit = async (form) => {
     try {

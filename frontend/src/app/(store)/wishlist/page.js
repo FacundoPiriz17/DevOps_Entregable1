@@ -25,13 +25,14 @@ export default function WishlistPage() {
 
   const runAction = async (gameId, action) => {
     setUpdating(gameId);
+    let actionError = null;
     try {
       await action();
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setUpdating(null);
+      actionError = error;
     }
+    setUpdating(null);
+    if (actionError) notify(actionError.message, "error");
   };
 
   if (storeLoading || gamesQuery.isPending) return <LoadingState label="Buscando tus deseados..." />;

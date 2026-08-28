@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { domAnimation, LazyMotion } from "motion/react";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
 
@@ -17,10 +18,12 @@ export default function Providers({ children }) {
   }));
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ToastProvider>
-        <AuthProvider>{children}</AuthProvider>
-      </ToastProvider>
-    </QueryClientProvider>
+    <LazyMotion features={domAnimation} strict>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    </LazyMotion>
   );
 }
