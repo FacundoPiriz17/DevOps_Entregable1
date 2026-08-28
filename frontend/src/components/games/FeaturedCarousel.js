@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import { LuArrowLeft, LuArrowRight, LuShoppingCart, LuSparkles } from "react-icons/lu";
 import Button, { buttonClasses } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
@@ -40,20 +41,21 @@ export default function FeaturedCarousel({ games }) {
 
   const handleAdd = async () => {
     setAdding(true);
+    let actionError = null;
     try {
       await addToCart(game.id);
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setAdding(false);
+      actionError = error;
     }
+    setAdding(false);
+    if (actionError) notify(actionError.message, "error");
   };
 
   return (
     <NeonFrame game={game} imageType="banner" imageUrl={background} radius={29} className="rounded-4xl max-md:rounded-3xl">
       <section className="relative min-h-120 overflow-hidden rounded-[inherit] bg-ink-900 text-white shadow-[0_28px_65px_rgba(9,14,38,.2)] max-md:min-h-125 max-sm:min-h-135" aria-roledescription="carrusel" aria-label="Juegos destacados">
       <AnimatePresence mode="popLayout">
-        <motion.div
+        <m.div
           key={`image-${game.id}`}
           className="absolute inset-0 scale-[1.02]"
           initial={{ opacity: 0 }}
@@ -62,11 +64,11 @@ export default function FeaturedCarousel({ games }) {
           transition={{ duration: 0.45 }}
         >
           <GameArtwork game={game} type="banner" priority className="size-full" />
-        </motion.div>
+        </m.div>
       </AnimatePresence>
       <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,23,.97)_0%,rgba(5,8,23,.8)_43%,rgba(5,8,23,.2)_78%),linear-gradient(0deg,rgba(5,8,23,.8),transparent_55%)] max-md:bg-[linear-gradient(0deg,rgba(5,8,23,.98)_0%,rgba(5,8,23,.78)_68%,rgba(5,8,23,.3))]" />
       <AnimatePresence mode="wait">
-        <motion.div
+        <m.div
           key={game.id}
           className="relative z-2 flex min-h-120 w-[min(720px,67%)] flex-col justify-center px-[clamp(32px,6vw,88px)] py-15 max-md:min-h-125 max-md:w-full max-md:justify-end max-md:px-6.5 max-md:pt-10 max-md:pb-19 max-sm:min-h-135"
           initial={{ opacity: 0, x: 22 }}
@@ -95,7 +97,7 @@ export default function FeaturedCarousel({ games }) {
               </Link>
             )}
           </div>
-        </motion.div>
+        </m.div>
       </AnimatePresence>
 
       {games.length > 1 && (

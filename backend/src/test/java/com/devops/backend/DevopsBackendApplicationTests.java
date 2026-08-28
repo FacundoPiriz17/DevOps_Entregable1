@@ -66,9 +66,9 @@ class DevopsBackendApplicationTests {
     }
 
     @Test
-    void flywayCreatesTheSchemaFrom01Init() {
+    void flywayCreatesTheSchemaAndCompleteArtwork() {
         Long migrations = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM flyway_schema_history WHERE version IN ('1', '2') AND success = TRUE",
+                "SELECT COUNT(*) FROM flyway_schema_history WHERE version IN ('1', '2', '3') AND success = TRUE",
                 Long.class);
         Long domainTables = jdbcTemplate.queryForObject("""
                 SELECT COUNT(*) FROM information_schema.tables
@@ -82,11 +82,23 @@ class DevopsBackendApplicationTests {
                 WHERE typname IN ('estado_juego', 'tipo_imagen', 'tipo_categoria')
                 """, Long.class);
         Long demoGames = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM juego", Long.class);
+        Long gamesWithCompleteArtwork = jdbcTemplate.queryForObject("""
+                SELECT COUNT(*)
+                FROM (
+                    SELECT j.identificador
+                    FROM juego j
+                    JOIN juego_imagen ji ON ji.identificador_juego = j.identificador
+                    WHERE ji.tipo IN ('portada', 'banner')
+                    GROUP BY j.identificador
+                    HAVING COUNT(DISTINCT ji.tipo) = 2
+                ) complete_artwork
+                """, Long.class);
 
-        assertThat(migrations).isEqualTo(2L);
+        assertThat(migrations).isEqualTo(3L);
         assertThat(domainTables).isEqualTo(12L);
         assertThat(enumTypes).isEqualTo(3L);
         assertThat(demoGames).isEqualTo(12L);
+        assertThat(gamesWithCompleteArtwork).isEqualTo(12L);
     }
 
     @Test

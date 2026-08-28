@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { LuX } from "react-icons/lu";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import Button from "./Button";
 
 export default function ConfirmDialog({
@@ -15,19 +16,23 @@ export default function ConfirmDialog({
   onConfirm,
   children,
 }) {
+  const closeFromEscape = useEffectEvent(() => {
+    if (!loading) onClose();
+  });
+
   useEffect(() => {
     if (!open) return undefined;
     const handleKey = (event) => {
-      if (event.key === "Escape" && !loading) onClose();
+      if (event.key === "Escape") closeFromEscape();
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [open, loading, onClose]);
+  }, [open]);
 
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
+        <m.div
           className="fixed inset-0 z-300 flex items-center justify-center bg-ink-950/75 p-5 backdrop-blur-lg"
           role="presentation"
           onMouseDown={loading ? undefined : onClose}
@@ -35,7 +40,7 @@ export default function ConfirmDialog({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <motion.section
+          <m.section
             className="relative w-full max-w-lg rounded-3xl border border-line bg-panel p-8 text-copy shadow-float"
             role="dialog"
             aria-modal="true"
@@ -56,8 +61,8 @@ export default function ConfirmDialog({
               <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>Volver</Button>
               <Button type="button" onClick={onConfirm} loading={loading}>{confirmLabel}</Button>
             </div>
-          </motion.section>
-        </motion.div>
+          </m.section>
+        </m.div>
       )}
     </AnimatePresence>
   );

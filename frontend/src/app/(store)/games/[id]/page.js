@@ -48,13 +48,14 @@ export default function GameDetailPage() {
 
   const runAction = async (name, action) => {
     setActionLoading(name);
+    let actionError = null;
     try {
       await action();
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setActionLoading("");
+      actionError = error;
     }
+    setActionLoading("");
+    if (actionError) notify(actionError.message, "error");
   };
 
   return (

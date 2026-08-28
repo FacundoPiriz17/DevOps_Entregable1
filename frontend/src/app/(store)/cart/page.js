@@ -31,26 +31,31 @@ export default function CartPage() {
 
   const handleRemove = async (gameId) => {
     setRemoving(gameId);
+    let actionError = null;
     try {
       await removeFromCart(gameId);
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setRemoving(null);
+      actionError = error;
     }
+    setRemoving(null);
+    if (actionError) notify(actionError.message, "error");
   };
 
   const handleCheckout = async () => {
     setCheckingOut(true);
+    let actionError = null;
     try {
       await checkout();
-      setDialogOpen(false);
-      router.push("/library");
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setCheckingOut(false);
+      actionError = error;
     }
+    setCheckingOut(false);
+    if (actionError) {
+      notify(actionError.message, "error");
+      return;
+    }
+    setDialogOpen(false);
+    router.push("/library");
   };
 
   if (storeLoading || gamesQuery.isPending) return <LoadingState label="Preparando tu carrito..." />;

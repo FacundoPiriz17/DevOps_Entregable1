@@ -105,6 +105,13 @@ class ApiControllerTest {
                 {"name":"Julia","email":"julia@example.com","country":"Uruguay","password":"Password123"}
                 """))
                 .andExpect(status().isCreated())
+                .andExpect(header().string(HttpHeaders.SET_COOKIE,
+                        org.hamcrest.Matchers.allOf(
+                                org.hamcrest.Matchers.containsString("playhub_session=token"),
+                                org.hamcrest.Matchers.containsString("HttpOnly"),
+                                org.hamcrest.Matchers.containsString("Secure"),
+                                org.hamcrest.Matchers.containsString("SameSite=Strict"))))
+                .andExpect(jsonPath("$.token").doesNotExist())
                 .andExpect(jsonPath("$.email").value(USER))
                 .andExpect(jsonPath("$.country").value("Uruguay"));
         verify(authService).register(request);

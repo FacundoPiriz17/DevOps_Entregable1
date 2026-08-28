@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -23,16 +22,12 @@ const initialForm = {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { authenticated, ready, register: createAccount } = useAuth();
+  const { register: createAccount } = useAuth();
   const { notify } = useToast();
   const { register, handleSubmit, setError, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(registerSchema),
     defaultValues: initialForm,
   });
-
-  useEffect(() => {
-    if (ready && authenticated) router.replace("/catalog");
-  }, [ready, authenticated, router]);
 
   const onSubmit = async (form) => {
     try {

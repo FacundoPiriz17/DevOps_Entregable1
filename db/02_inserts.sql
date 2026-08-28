@@ -170,19 +170,26 @@ INSERT INTO imagen (url, texto_alternativo) VALUES
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/374320/library_hero.jpg', 'Banner de Dark Souls III'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/996580/library_600x900_2x.jpg', 'Portada de Spyro Reignited Trilogy'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/996580/library_hero.jpg', 'Banner de Spyro Reignited Trilogy'),
-('https://imgcdn1.nexarda.com/uploads/-/2020/1601137850-79c32b91f0b59aa5ac2f64a3924d5d891d32715be7c17d71545a0387ec8e27e9.jpg', 'Imagen de Persona 5'),
+('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1687950/library_600x900_2x.jpg', 'Portada de Persona 5'),
+('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1687950/library_hero.jpg', 'Banner de Persona 5'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1145360/library_600x900_2x.jpg', 'Portada de Hades'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1145360/library_hero.jpg', 'Banner de Hades'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/367520/library_600x900_2x.jpg', 'Portada de Hollow Knight'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/367520/library_hero.jpg', 'Banner de Hollow Knight'),
-('https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_656/b_white/f_auto/q_auto/ncom/software/switch/70010000000025/7137262b5a64d921e193653f8aa0b722925abc5680380ca0e18a5cfd91697f58', 'Imagen de The Legend of Zelda: Breath of the Wild'),
-('https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000001130/c42553b4fd0312c31e70ec7468c6c9bccd739f340152925b9600631f2d29f8b5', 'Imagen de Super Mario Odyssey'),
+('https://pisces.bbystatic.com/image2/BestBuy_US/images/products/5721/5721500_sd.jpg', 'Portada de The Legend of Zelda: Breath of the Wild'),
+('https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/ncom/software/switch/70010000000025/7137262b5a64d921e193653f8aa0b722925abc5680380ca0e18a5cfd91697f58', 'Banner de The Legend of Zelda: Breath of the Wild'),
+('https://images.launchbox-app.com/5bd97f0b-c784-4cf0-87e1-2b10f36637fa.jpg', 'Portada de Super Mario Odyssey'),
+('https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000001130/c42553b4fd0312c31e70ec7468c6c9bccd739f340152925b9600631f2d29f8b5', 'Banner de Super Mario Odyssey'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1086940/library_600x900_2x.jpg', 'Portada de Baldur''s Gate 3'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1086940/library_hero.jpg', 'Banner de Baldur''s Gate 3'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/524220/library_600x900_2x.jpg', 'Portada de NieR: Automata'),
+('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/524220/library_hero.jpg', 'Banner de NieR: Automata'),
 ('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/504230/library_600x900_2x.jpg', 'Portada de Celeste'),
-('https://en.wikipedia.org/wiki/Special:FilePath/Bloodborne_Cover_Wallpaper.jpg?width=600', 'Imagen de Bloodborne'),
+('https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/504230/library_hero.jpg', 'Banner de Celeste'),
+('https://cdn2.steamgriddb.com/grid/5445c5fc4461b6d81db6224a6c28be2b.png', 'Portada de Bloodborne'),
+('https://wallpaperset.com/w/full/3/b/0/250799.jpg', 'Banner de Bloodborne'),
 ('https://media-rockstargames-com.akamaized.net/mfe6/prod/__common/img/090acda789de843d56780aa60c1f7056.jpg', 'Portada de Grand Theft Auto VI'),
+('https://www.rockstargames.com/VI/-/opengraph-image.jpg?opengraph-image.0t8ty~nlmxq2s.jpg', 'Banner de Grand Theft Auto VI'),
 ('https://commons.wikimedia.org/wiki/Special:FilePath/Fromsoftware_logo.svg', 'Logo de FromSoftware');
 
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
@@ -212,7 +219,13 @@ WHERE j.nombre = 'Spyro Reignited Trilogy';
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
 SELECT j.identificador, i.id_imagen, 'portada'
 FROM juego j
-JOIN imagen i ON i.url = 'https://imgcdn1.nexarda.com/uploads/-/2020/1601137850-79c32b91f0b59aa5ac2f64a3924d5d891d32715be7c17d71545a0387ec8e27e9.jpg'
+JOIN imagen i ON i.url = 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1687950/library_600x900_2x.jpg'
+WHERE j.nombre = 'Persona 5';
+
+INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
+SELECT j.identificador, i.id_imagen, 'banner'
+FROM juego j
+JOIN imagen i ON i.url = 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1687950/library_hero.jpg'
 WHERE j.nombre = 'Persona 5';
 
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
@@ -242,11 +255,23 @@ WHERE j.nombre = 'Hollow Knight';
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
 SELECT j.identificador, i.id_imagen, 'portada'
 FROM juego j
-JOIN imagen i ON i.url = 'https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_656/b_white/f_auto/q_auto/ncom/software/switch/70010000000025/7137262b5a64d921e193653f8aa0b722925abc5680380ca0e18a5cfd91697f58'
+JOIN imagen i ON i.url = 'https://pisces.bbystatic.com/image2/BestBuy_US/images/products/5721/5721500_sd.jpg'
+WHERE j.nombre = 'The Legend of Zelda: Breath of the Wild';
+
+INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
+SELECT j.identificador, i.id_imagen, 'banner'
+FROM juego j
+JOIN imagen i ON i.url = 'https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/ncom/software/switch/70010000000025/7137262b5a64d921e193653f8aa0b722925abc5680380ca0e18a5cfd91697f58'
 WHERE j.nombre = 'The Legend of Zelda: Breath of the Wild';
 
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
 SELECT j.identificador, i.id_imagen, 'portada'
+FROM juego j
+JOIN imagen i ON i.url = 'https://images.launchbox-app.com/5bd97f0b-c784-4cf0-87e1-2b10f36637fa.jpg'
+WHERE j.nombre = 'Super Mario Odyssey';
+
+INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
+SELECT j.identificador, i.id_imagen, 'banner'
 FROM juego j
 JOIN imagen i ON i.url = 'https://assets.nintendo.com/image/upload/ar_16:9,c_lpad,w_1240/b_white/f_auto/q_auto/store/software/switch/70010000001130/c42553b4fd0312c31e70ec7468c6c9bccd739f340152925b9600631f2d29f8b5'
 WHERE j.nombre = 'Super Mario Odyssey';
@@ -270,21 +295,45 @@ JOIN imagen i ON i.url = 'https://shared.fastly.steamstatic.com/store_item_asset
 WHERE j.nombre = 'NieR: Automata';
 
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
+SELECT j.identificador, i.id_imagen, 'banner'
+FROM juego j
+JOIN imagen i ON i.url = 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/524220/library_hero.jpg'
+WHERE j.nombre = 'NieR: Automata';
+
+INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
 SELECT j.identificador, i.id_imagen, 'portada'
 FROM juego j
 JOIN imagen i ON i.url = 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/504230/library_600x900_2x.jpg'
 WHERE j.nombre = 'Celeste';
 
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
+SELECT j.identificador, i.id_imagen, 'banner'
+FROM juego j
+JOIN imagen i ON i.url = 'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/504230/library_hero.jpg'
+WHERE j.nombre = 'Celeste';
+
+INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
 SELECT j.identificador, i.id_imagen, 'portada'
 FROM juego j
-JOIN imagen i ON i.url = 'https://en.wikipedia.org/wiki/Special:FilePath/Bloodborne_Cover_Wallpaper.jpg?width=600'
+JOIN imagen i ON i.url = 'https://cdn2.steamgriddb.com/grid/5445c5fc4461b6d81db6224a6c28be2b.png'
+WHERE j.nombre = 'Bloodborne';
+
+INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
+SELECT j.identificador, i.id_imagen, 'banner'
+FROM juego j
+JOIN imagen i ON i.url = 'https://wallpaperset.com/w/full/3/b/0/250799.jpg'
 WHERE j.nombre = 'Bloodborne';
 
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
 SELECT j.identificador, i.id_imagen, 'portada'
 FROM juego j
 JOIN imagen i ON i.url = 'https://media-rockstargames-com.akamaized.net/mfe6/prod/__common/img/090acda789de843d56780aa60c1f7056.jpg'
+WHERE j.nombre = 'Grand Theft Auto VI';
+
+INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)
+SELECT j.identificador, i.id_imagen, 'banner'
+FROM juego j
+JOIN imagen i ON i.url = 'https://www.rockstargames.com/VI/-/opengraph-image.jpg?opengraph-image.0t8ty~nlmxq2s.jpg'
 WHERE j.nombre = 'Grand Theft Auto VI';
 
 INSERT INTO juego_imagen (identificador_juego, id_imagen, tipo)

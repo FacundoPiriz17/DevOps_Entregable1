@@ -34,13 +34,14 @@ export default function LibraryPage() {
 
   const handleFavorite = async (gameId) => {
     setUpdating(gameId);
+    let actionError = null;
     try {
       await toggleFavorite(gameId);
     } catch (error) {
-      notify(error.message, "error");
-    } finally {
-      setUpdating(null);
+      actionError = error;
     }
+    setUpdating(null);
+    if (actionError) notify(actionError.message, "error");
   };
 
   if (storeLoading || gamesQuery.isPending) return <LoadingState label="Ordenando tu biblioteca..." />;

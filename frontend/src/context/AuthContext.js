@@ -3,7 +3,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { sessionStorage } from "@/lib/storage";
 
 const AuthContext = createContext(null);
 
@@ -13,27 +12,25 @@ export function AuthProvider({ children }) {
   const [ready, setReady] = useState(false);
 
   const clearSession = useCallback(() => {
-    sessionStorage.clear();
     setSession(null);
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    let logoutError = null;
+    try {
+      await api.auth.logout();
+    } catch (error) {
+      logoutError = error;
+    }
     clearSession();
     router.replace("/login");
+    if (logoutError) throw logoutError;
   }, [clearSession, router]);
 
   useEffect(() => {
-    const stored = sessionStorage.read();
-    if (!stored) {
-      Promise.resolve().then(() => setReady(true));
-      return;
-    }
-
-    api.users.me()
+    api.users.me({ notifyUnauthorized: false })
       .then((user) => {
-        const nextSession = { token: stored.token, user };
-        sessionStorage.write(stored.token, user);
-        setSession(nextSession);
+        setSession({ user });
       })
       .catch(clearSession)
       .finally(() => setReady(true));
@@ -57,8 +54,7 @@ export function AuthProvider({ children }) {
       role: response.role,
       active: true,
     };
-    const nextSession = { token: response.token, user };
-    sessionStorage.write(response.token, user);
+    const nextSession = { user };
     setSession(nextSession);
     return nextSession;
   }, []);
@@ -76,9 +72,8 @@ export function AuthProvider({ children }) {
   const value = useMemo(() => ({
     session,
     user: session?.user || null,
-    token: session?.token || null,
     ready,
-    authenticated: Boolean(session?.token),
+    authenticated: Boolean(session?.user),
     isUser: session?.user?.role === "USER",
     isAdmin: session?.user?.role === "ADMIN",
     login,

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "motion/react";
+import { usePathname } from "next/navigation";
+import { AnimatePresence } from "motion/react";
+import * as m from "motion/react-m";
 import {
   LuChevronDown,
   LuHeart,
@@ -31,15 +32,10 @@ const userLinks = [
 
 export default function AppShell({ children }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { authenticated, ready, user, isUser, isAdmin, logout } = useAuth();
   const { cart } = useStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-
-  useEffect(() => {
-    if (ready && !authenticated) router.replace("/login");
-  }, [ready, authenticated, router]);
 
   if (!ready || !authenticated) return <LoadingState label="Preparando tu espacio..." />;
 
@@ -95,7 +91,7 @@ export default function AppShell({ children }) {
 
               <AnimatePresence>
                 {profileOpen && (
-                  <motion.div
+                  <m.div
                     className="absolute top-[calc(100%+10px)] right-0 min-w-68 overflow-hidden rounded-2xl border border-line bg-panel p-2 text-copy shadow-float"
                     initial={{ opacity: 0, y: 8, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -107,7 +103,7 @@ export default function AppShell({ children }) {
                     </div>
                     <div className="mx-1.5 mb-2 flex items-center gap-1.5 rounded-lg bg-panel-soft p-2 text-xs font-bold text-copy-soft"><LuShieldCheck aria-hidden /> {user?.role}</div>
                     <button className="flex w-full items-center gap-2 rounded-lg border-0 bg-transparent p-2.5 text-sm font-semibold text-rose-300 hover:bg-rose-400/10" type="button" onClick={logout}><LuLogOut aria-hidden /> Cerrar sesión</button>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
