@@ -1,0 +1,55 @@
+apiVersion: playhub/v1.0
+kind: Deployment
+metadata:
+  name: playhub-deployment
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: playhub
+      version: blue
+
+  template:
+    metadata:
+      labels:
+        app: playhub
+        version: blue
+
+    spec:
+      containers:
+        - name: playhub
+          image: playhub:v1.0
+
+          ports:
+            - containerPort: 5000
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 5000
+            initialDelaySeconds: 2
+            periodSeconds: 2
+
+          env:
+            - name: APP_TITLE
+              valueFrom:
+                configMapKeyRef:
+                  name: notas-config
+                  key: APP_TITLE
+
+            - name: INSTANCE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+          volumeMounts:
+            - name: notas-data
+              mountPath: /data
+
+      volumes:
+        - name: notas-data
+          hostPath:
+            path: /data/notas
+            type: DirectoryOrCreate
