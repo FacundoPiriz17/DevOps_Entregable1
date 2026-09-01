@@ -1,0 +1,57 @@
+apiVersion: playhub/v1.0
+kind: Deployment
+metadata:
+  name: playhub-deployment
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: playhub
+      version: blue
+
+  template:
+    metadata:
+      labels:
+        app: playhub
+        version: blue
+
+    spec:
+      containers:
+        - name: playhub
+          image: playhub:v1.0
+
+          ports:
+            - containerPort: 5000
+
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: playhub-secrets
+                  key: DB_PASSWORD
+
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: playhub-secrets
+                  key: JWT_SECRET
+
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: playhub-secrets
+                  key: ADMIN_PASSWORD
+
+          volumeMounts:
+            - name: notas-data
+              mountPath: /data
+
+      volumes:
+        - name: notas-data
+          hostPath:
+            path: /data/notas
+            type: DirectoryOrCreate
+
+---
