@@ -5,7 +5,9 @@ metadata:
   labels:
     app: playhub-migrations
 spec:
-  backoffLimit: 4
+  # Flyway ya reintenta la conexion; un solo reintento de Pod evita cinco fallos
+  # identicos cuando la validacion de una migracion es deterministica.
+  backoffLimit: 1
   activeDeadlineSeconds: 300
   template:
     metadata:

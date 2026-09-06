@@ -35,6 +35,43 @@ function Get-ServiceSlot {
     return $slot.Trim()
 }
 
+function Set-ServiceSlot {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Service,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateSet("blue", "green")]
+        [string]$Slot
+    )
+
+    $patch = @{
+        spec = @{
+            selector = @{
+                slot = $Slot
+            }
+        }
+    } | ConvertTo-Json -Compress
+
+    $patchFile = [System.IO.Path]::GetTempFileName()
+
+    try {
+        $utf8WithoutBom = [System.Text.UTF8Encoding]::new($false)
+        [System.IO.File]::WriteAllText($patchFile, $patch, $utf8WithoutBom)
+
+        Invoke-Kubectl -Arguments @(
+            "patch",
+            "service",
+            $Service,
+            "--type=merge",
+            "--patch-file=$patchFile"
+        )
+    }
+    finally {
+        Remove-Item -LiteralPath $patchFile -Force -ErrorAction SilentlyContinue
+    }
+}
+
 if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
     throw "No se encontro kubectl en PATH."
 }
@@ -62,22 +99,20 @@ Invoke-Kubectl -Arguments @("rollout", "status", "deployment/$backendDeployment"
 Write-Host "Comprobando que Frontend $Target este disponible..."
 Invoke-Kubectl -Arguments @("rollout", "status", "deployment/$frontendDeployment", "--timeout=180s")
 
-$targetPatch = '{"spec":{"selector":{"slot":"' + $Target + '"}}}'
-$rollbackPatch = '{"spec":{"selector":{"slot":"' + $currentSlot + '"}}}'
 $backendChanged = $false
 
 try {
     Write-Host "Cambiando el backend de $currentSlot a $Target..."
-    Invoke-Kubectl -Arguments @("patch", "service", "playhub-backend", "--type=merge", "--patch=$targetPatch")
+    Set-ServiceSlot -Service "playhub-backend" -Slot $Target
     $backendChanged = $true
 
     Write-Host "Cambiando el frontend de $currentSlot a $Target..."
-    Invoke-Kubectl -Arguments @("patch", "service", "playhub-frontend", "--type=merge", "--patch=$targetPatch")
+    Set-ServiceSlot -Service "playhub-frontend" -Slot $Target
 }
 catch {
     if ($backendChanged) {
         Write-Warning "Fallo el cambio del frontend. Restaurando el backend a $currentSlot..."
-        Invoke-Kubectl -Arguments @("patch", "service", "playhub-backend", "--type=merge", "--patch=$rollbackPatch")
+        Set-ServiceSlot -Service "playhub-backend" -Slot $currentSlot
     }
 
     throw
