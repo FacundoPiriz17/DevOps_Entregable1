@@ -1,3 +1,13 @@
+/**
+ * @file JwtService.java
+ * @brief Genera y gestiona tokens JWT utilizados para la autenticación de usuarios.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 package com.devops.backend.common.security;
 
 import com.devops.backend.modules.user.entity.Role;
@@ -25,6 +35,13 @@ public class JwtService {
         this.expirationMinutes = expirationMinutes;
     }
 
+    /**
+     * @brief Genera un token JWT con el correo electrónico y rol del usuario.
+     *
+     * @param user usuario para el que se genera el token.
+     * @param role rol del usuario que se incluirá en el token.
+     * @return token JWT generado para el usuario.
+     */
     public String generateToken(User user, Role role) {
         Instant now = Instant.now();
         return Jwts.builder()
@@ -37,5 +54,12 @@ public class JwtService {
                 .compact();
     }
 
-    public SecretKey getSigningKey() { return signingKey; }
+    /**
+     * @brief Obtiene la clave utilizada para firmar los tokens JWT.
+     *
+     * @return clave secreta utilizada para firmar los tokens JWT.
+     */
+    public SecretKey getSigningKey() {
+        return signingKey;
+    }
 }

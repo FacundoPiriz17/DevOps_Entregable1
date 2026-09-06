@@ -1,6 +1,17 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/cn";
 
+/**
+ * Presenta un campo de entrada con etiqueta, icono, mensaje de error y acción opcional.
+ * @param {Object} props propiedades del componente
+ * @param {string} props.label etiqueta descriptiva del campo
+ * @param {React.ComponentType} [props.icon] componente de icono mostrado en el campo
+ * @param {string} [props.error] mensaje de error mostrado debajo del campo
+ * @param {React.ReactNode} [props.action] acción adicional mostrada dentro del campo
+ * @param {string} [props.className] clases CSS adicionales
+ * @param {Object} props.ref referencia del elemento de entrada
+ * @returns {JSX.Element} campo de entrada renderizado
+ */
 const Input = forwardRef(function Input({ label, icon: Icon, error, action, className, ...props }, ref) {
   return (
     <label className={cn("grid gap-2 text-sm font-semibold text-copy", className)}>

@@ -13,6 +13,10 @@ import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/context/ToastContext";
 import { loginSchema } from "@/lib/authSchemas";
 
+/**
+ * Presenta el formulario de inicio de sesión de la aplicación
+ * @returns {JSX.Element} página de inicio de sesión renderizada
+ */
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
@@ -23,6 +27,13 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
+  /**
+   * Procesa las credenciales del formulario e inicia la sesión
+   * @param {Object} form datos introducidos por el usuario
+   * @param {string} form.email correo electrónico del usuario
+   * @param {string} form.password contraseña del usuario
+   * @returns {Promise<void>} promesa que representa el proceso de autenticación 
+   */
   const onSubmit = async (form) => {
     try {
       const nextSession = await login({

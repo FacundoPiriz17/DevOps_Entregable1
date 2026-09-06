@@ -19,6 +19,12 @@ const statusLabels = {
   retirado: "Retirado",
 };
 
+/**
+ * Presenta la información y acciones principales de un videojuego.
+ * @param {Object} props propiedades del componente
+ * @param {Object} props.game información del videojuego
+ * @returns {JSX.Element} tarjeta del videojuego renderizada
+ */
 export default function GameCard({ game }) {
   const { isUser } = useAuth();
   const { addToCart, toggleWishlist, inCart, inLibrary, inWishlist } = useStore();
@@ -29,6 +35,10 @@ export default function GameCard({ game }) {
   const added = inCart(game.id);
   const wished = inWishlist(game.id);
 
+  /**
+   * Añade el videojuego al carrito y notifica los errores de la operación.
+   * @returns {Promise<void>} promesa que representa la operación de agregado
+   */
   const handleCart = async () => {
     setCartLoading(true);
     let actionError = null;
@@ -41,6 +51,10 @@ export default function GameCard({ game }) {
     if (actionError) notify(actionError.message, "error");
   };
 
+  /**
+   * Añade o elimina el videojuego de la lista de deseados.
+   * @returns {Promise<void>} promesa que representa la operación de actualización
+   */
   const handleWishlist = async () => {
     setWishLoading(true);
     let actionError = null;

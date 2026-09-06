@@ -1,3 +1,13 @@
+/**
+ * @file SecurityConfig.java
+ * @brief Configura la seguridad, autenticación, autorización y políticas CORS de la aplicación.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 package com.devops.backend.common.security;
 
 import com.devops.backend.common.config.CorsProperties;
@@ -26,16 +36,32 @@ import java.util.List;
 @EnableConfigurationProperties(CorsProperties.class)
 public class SecurityConfig {
 
+    /**
+     * @brief Configura el codificador utilizado para proteger las contraseñas.
+     *
+     * @return codificador de contraseñas basado en BCrypt.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * @brief Configura el decodificador utilizado para validar los tokens JWT.
+     *
+     * @param jwtService servicio utilizado para obtener la clave de firma de los tokens.
+     * @return decodificador JWT configurado con la clave de firma.
+     */
     @Bean
     public JwtDecoder jwtDecoder(JwtService jwtService) {
         return NimbusJwtDecoder.withSecretKey(jwtService.getSigningKey()).build();
     }
 
+    /**
+     * @brief Configura la conversión de los roles incluidos en los tokens JWT a autoridades de Spring Security.
+     *
+     * @return convertidor de autenticación JWT configurado para procesar los roles.
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -47,6 +73,12 @@ public class SecurityConfig {
         return converter;
     }
 
+    /**
+     * @brief Configura las políticas CORS permitidas para las solicitudes de la aplicación.
+     *
+     * @param corsProperties propiedades que contienen los orígenes permitidos para CORS.
+     * @return fuente de configuración CORS aplicada a las rutas de la aplicación.
+     */
     @Bean
     public UrlBasedCorsConfigurationSource corsConfigurationSource(CorsProperties corsProperties) {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -62,11 +94,27 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * @brief Configura el mecanismo utilizado para obtener el token Bearer de las solicitudes.
+     *
+     * @return resolvedor de tokens Bearer configurado para utilizar JWT.
+     */
     @Bean
     public BearerTokenResolver bearerTokenResolver() {
         return new JwtCookieBearerTokenResolver();
     }
 
+    /**
+     * @brief Configura la cadena de filtros de seguridad, autenticación y autorización de la aplicación.
+     *
+     * @param http configuración HTTP utilizada para definir las políticas de seguridad.
+     * @param converter convertidor utilizado para transformar los roles del token JWT.
+     * @param bearerTokenResolver resolvedor utilizado para obtener el token Bearer.
+     * @param corsConfigurationSource fuente de configuración utilizada para las políticas CORS.
+     * @param authenticationEntryPoint manejador utilizado para las solicitudes que requieren autenticación.
+     * @param accessDeniedHandler manejador utilizado para los accesos denegados por falta de permisos.
+     * @return cadena de filtros de seguridad configurada para la aplicación.
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,

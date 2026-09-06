@@ -6,6 +6,19 @@ import { AnimatePresence } from "motion/react";
 import * as m from "motion/react-m";
 import Button from "./Button";
 
+/**
+ * Presenta un diálogo modal para confirmar una acción.
+ * @param {Object} props propiedades del componente
+ * @param {boolean} props.open indica si el diálogo está visible
+ * @param {string} props.title título principal del diálogo
+ * @param {string} props.description descripción de la acción a confirmar
+ * @param {string} [props.confirmLabel="Confirmar"] texto del botón de confirmación
+ * @param {boolean} [props.loading=false] indica si la confirmación está en proceso
+ * @param {Function} props.onClose función ejecutada al cerrar el diálogo
+ * @param {Function} props.onConfirm función ejecutada al confirmar la acción
+ * @param {React.ReactNode} [props.children] contenido adicional del diálogo 
+ * @returns {JSX.Element} diálogo de confirmación renderizado
+ */
 export default function ConfirmDialog({
   open,
   title,

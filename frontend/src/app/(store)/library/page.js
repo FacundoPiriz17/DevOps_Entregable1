@@ -14,6 +14,10 @@ import { formatDate, mergeGames } from "@/lib/games";
 
 const EMPTY_GAMES = [];
 
+/**
+ * Presenta la biblioteca de videojuegos del usuario.
+ * @returns {JSX.Element} página renderizada de la biblioteca
+ */
 export default function LibraryPage() {
   const { library, loading: storeLoading, toggleFavorite } = useStore();
   const { notify } = useToast();
@@ -32,6 +36,11 @@ export default function LibraryPage() {
     });
   }, [library, games, query, favoritesOnly]);
 
+  /**
+   * Cambia el estado de favorito de un videojuego.
+   * @param {number} gameId identificador del videojuego
+   * @returns {Promise<void>} promesa que representa la actualización
+   */
   const handleFavorite = async (gameId) => {
     setUpdating(gameId);
     let actionError = null;

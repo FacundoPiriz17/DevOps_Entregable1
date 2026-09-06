@@ -1,5 +1,15 @@
 package com.devops.backend.modules.wishlist.service;
 
+/**
+ * @file WishlistService.java
+ * @brief Gestiona las operaciones relacionadas con la lista de videojuegos deseados de los usuarios.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 import com.devops.backend.common.exception.ApiException;
 import com.devops.backend.modules.game.entity.Game;
 import com.devops.backend.modules.game.entity.GameStatus;
@@ -17,6 +27,10 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * @brief Proporciona la lógica necesaria para añadir, consultar y eliminar videojuegos de la lista de deseados.
+ *
+ */
 @Service
 public class WishlistService {
     private final WishlistItemRepository wishlistItemRepository;
@@ -31,6 +45,15 @@ public class WishlistService {
         this.gameRepository = gameRepository;
     }
 
+    /**
+     * @brief Añade un videojuego disponible a la lista de deseados del usuario.
+     *
+     * @param userEmail correo electrónico del usuario propietario de la lista de deseados.
+     * @param gameId identificador del videojuego que se desea añadir.
+     * @return información del videojuego añadido a la lista de deseados.
+     * @throws ApiException si el videojuego no existe, está retirado, ya está en la biblioteca
+     *                      o ya se encuentra en la lista de deseados.
+     */
     @Transactional
     public WishlistItemResponse add(String userEmail, Long gameId) {
         Game game = gameRepository.findById(gameId)
@@ -48,6 +71,12 @@ public class WishlistService {
         return WishlistItemResponse.from(item, game);
     }
 
+    /**
+     * @brief Obtiene todos los videojuegos que se encuentran en la lista de deseados de un usuario.
+     *
+     * @param userEmail correo electrónico del usuario propietario de la lista de deseados.
+     * @return lista de videojuegos incluidos en la lista de deseados.
+     */
     @Transactional(readOnly = true)
     public List<WishlistItemResponse> list(String userEmail) {
         List<WishlistItem> items = wishlistItemRepository.findByIdUserEmail(userEmail);
@@ -59,6 +88,14 @@ public class WishlistService {
                 .toList();
     }
 
+    /**
+     * @brief Elimina un videojuego de la lista de deseados del usuario.
+     *
+     * @param userEmail correo electrónico del usuario propietario de la lista de deseados.
+     * @param gameId identificador del videojuego que se desea eliminar.
+     * @return no devuelve ningún valor.
+     * @throws ApiException si el videojuego no se encuentra en la lista de deseados.
+     */
     @Transactional
     public void remove(String userEmail, Long gameId) {
         WishlistItemId id = new WishlistItemId(gameId, userEmail);

@@ -13,6 +13,11 @@ const palettes = [
 const paletteCache = new Map();
 const paletteRequests = new Map();
 
+/**
+ * Genera una semilla numérica determinista a partir de un valor.
+ * @param {string|number} value valor utilizado para generar la semilla
+ * @returns {number} semilla numérica generada
+ */
 function hashSeed(value) {
   return String(value || "PlayHub").split("").reduce(
     (hash, character) => ((hash * 31) + character.charCodeAt(0)) >>> 0,
@@ -20,10 +25,22 @@ function hashSeed(value) {
   );
 }
 
+/**
+ * Obtiene una paleta predeterminada a partir de una semilla.
+ * @param {string|number} seed semilla utilizada para seleccionar la paleta
+ * @returns {Array<string>} colores de la paleta seleccionada
+ */
 function fallbackPalette(seed) {
   return palettes[hashSeed(seed) % palettes.length];
 }
 
+/**
+ * Convierte un color RGB al espacio de color HSL.
+ * @param {number} red componente roja del color 
+ * @param {number} green componente verde del color
+ * @param {number} blue componente azul del color
+ * @returns {Object} componentes HSL del color
+ */
 function rgbToHsl(red, green, blue) {
   const r = red / 255;
   const g = green / 255;
@@ -43,12 +60,23 @@ function rgbToHsl(red, green, blue) {
 
   return { hue: hue < 0 ? hue + 360 : hue, saturation, lightness };
 }
-
+/**
+ * Calcula la distancia mínima entre dos tonos en el círculo cromático.
+ * @param {number} first primer tono
+ * @param {number} second segundo tono
+ * @returns {number} distancia entre ambos tonos
+ */
 function hueDistance(first, second) {
   const difference = Math.abs(first - second);
   return Math.min(difference, 360 - difference);
 }
 
+/**
+ * Extrae una paleta de colores representativa a partir de una imagen.
+ * @param {HTMLImageElement} image imagen utilizada para obtener los colores
+ * @param {Array<string>} fallback paleta utilizada si no se pueden extraer colores
+ * @returns {Array<string>} paleta de colores extraída o alternativa
+ */
 function extractPalette(image, fallback) {
   const canvas = document.createElement("canvas");
   canvas.width = 32;
@@ -83,6 +111,11 @@ function extractPalette(image, fallback) {
   ];
 }
 
+/**
+ * Comprueba si una imagen puede procesarse desde el origen actual.
+ * @param {string} imageUrl URL de la imagen que se desea analizar
+ * @returns {boolean} indica si la imagen puede ser muestreada
+ */
 function canSampleImage(imageUrl) {
   try {
     const url = new URL(imageUrl, window.location.href);
@@ -92,6 +125,12 @@ function canSampleImage(imageUrl) {
   }
 }
 
+/**
+ * Solicita la extracción de una paleta de una imagen y gestiona su caché.
+ * @param {string} imageUrl URL de la imagen que se desea analizar
+ * @param {Array<string>} fallback paleta utilizada como alternativa
+ * @returns {Promise<Array<string>>} promesa con la paleta obtenida
+ */
 function requestPalette(imageUrl, fallback) {
   if (paletteCache.has(imageUrl)) return Promise.resolve(paletteCache.get(imageUrl));
   if (paletteRequests.has(imageUrl)) return paletteRequests.get(imageUrl);
@@ -122,6 +161,13 @@ function requestPalette(imageUrl, fallback) {
   return request;
 }
 
+/**
+ * Obtiene una paleta de colores adaptada a la imagen de una obra.
+ * @param {string} imageUrl URL de la imagen utilizada para extraer la paleta
+ * @param {string|number} seed semilla utilizada para generar la paleta alternativa
+ * @param {Array<string>} [preferredPalette] paleta preferida utilizada como alternativa
+ * @returns {Array<string>} paleta de colores resuelta para la imagen
+ */
 export default function useArtworkPalette(imageUrl, seed, preferredPalette) {
   const fallback = useMemo(
     () => preferredPalette || fallbackPalette(`${seed}-${imageUrl}`),

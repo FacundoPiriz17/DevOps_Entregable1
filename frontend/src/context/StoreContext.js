@@ -7,6 +7,12 @@ import { useToast } from "./ToastContext";
 
 const StoreContext = createContext(null);
 
+/**
+ * Proporciona el estado y las operaciones del carrito, biblioteca y lista de deseados.
+ * @param {Object} props propiedades del componente
+ * @param {React.ReactNode} props.children contenido que tendrá acceso al contexto 
+ * @returns {JSX.Element} proveedor de la tienda renderizado
+ */
 export function StoreProvider({ children }) {
   const { ready, isUser } = useAuth();
   const { notify } = useToast();
@@ -117,6 +123,11 @@ export function StoreProvider({ children }) {
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
+/**
+ * Obtiene el contexto de la tienda disponible para el componente actual.
+ * @returns {Object} estado y operaciones de la tienda
+ * @throws {Error} si se utiliza fuera de un StoreProvider
+ */
 export function useStore() {
   const context = useContext(StoreContext);
   if (!context) throw new Error("useStore debe utilizarse dentro de StoreProvider");

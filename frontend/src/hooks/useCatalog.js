@@ -3,6 +3,10 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
+/**
+ * Obtiene la lista de videojuegos mediante React Query.
+ * @returns {Object} consulta con los videojuegos y su estado de carga
+ */
 export function useGames() {
   return useQuery({
     queryKey: ["games"],
@@ -10,13 +14,21 @@ export function useGames() {
   });
 }
 
+/**
+ * Obtiene la lista de categorías mediante React Query.
+ * @returns {Object} consulta con las categorías y su estado de carga
+ */
 export function useCategories() {
   return useQuery({
     queryKey: ["categories"],
     queryFn: api.categories.list,
   });
 }
-
+/**
+ * Obtiene un videojuego específico mediante React Query.
+ * @param {string|number} id identificador del videojuego
+ * @returns {Object} consulta con el videojuego y su estado de carga
+ */
 export function useGame(id) {
   const queryClient = useQueryClient();
 

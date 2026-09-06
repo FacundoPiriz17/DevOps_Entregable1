@@ -20,6 +20,10 @@ const initialForm = {
   confirmPassword: "",
 };
 
+/**
+ * Presenta el formulario de registro de una nueva cuenta.
+ * @returns {JSX.Element} página renderizada de registro 
+ */
 export default function RegisterPage() {
   const router = useRouter();
   const { register: createAccount } = useAuth();
@@ -29,6 +33,16 @@ export default function RegisterPage() {
     defaultValues: initialForm,
   });
 
+  /**
+   * Procesa el registro de una nueva cuenta y gestiona los errores de la solicitud.
+   * @param {Object} form datos ingresados en el formulario
+   * @param {string} form.name nombre del usuario
+   * @param {string} form.email correo electrónico del usuario
+   * @param {string} form.country país del usuario
+   * @param {string} form.password contraseña elegida
+   * @param {string} form.confirmPassword confirmación de la contraseña
+   * @returns {Promise<void>} promesa que representa el proceso de registro
+   */
   const onSubmit = async (form) => {
     try {
       await createAccount({

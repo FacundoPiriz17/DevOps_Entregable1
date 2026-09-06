@@ -13,6 +13,12 @@ import { formatPrice, gameImage } from "@/lib/games";
 import GameArtwork from "./GameArtwork";
 import NeonFrame from "./NeonFrame";
 
+/**
+ * Presenta un carrusel animado con los videojuegos destacados.
+ * @param {Object} props propiedades del componente 
+ * @param {Array<Object>} props.games videojuegos disponibles para mostrar
+ * @returns {JSX.Element|null} carrusel de videojuegos destacados renderizado
+ */
 export default function FeaturedCarousel({ games }) {
   const { isUser } = useAuth();
   const { addToCart, inCart, inLibrary } = useStore();
@@ -35,10 +41,19 @@ export default function FeaturedCarousel({ games }) {
   const added = inCart(game.id);
   const owned = inLibrary(game.id);
 
+  /**
+   * Cambia el videojuego actualmente seleccionado en el carrusel.
+   * @param {number} direction dirección del desplazamiento del carrusel
+   * @returns {void} no devuelve ningún valor
+   */
   const move = (direction) => {
     setIndex((current) => (current + direction + games.length) % games.length);
   };
 
+  /**
+   * Añade el videojuego destacado al carrito y notifica los errores.
+   * @returns {Promise<void>} promesa que representa la operación de agregado
+   */
   const handleAdd = async () => {
     setAdding(true);
     let actionError = null;

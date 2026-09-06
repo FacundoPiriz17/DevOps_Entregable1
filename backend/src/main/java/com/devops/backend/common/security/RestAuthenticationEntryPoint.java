@@ -1,3 +1,13 @@
+/**
+ * @file RestAuthenticationEntryPoint.java
+ * @brief Gestiona las respuestas REST cuando una solicitud requiere autenticación o presenta un token inválido.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 package com.devops.backend.common.security;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +29,14 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
         this.errorWriter = errorWriter;
     }
 
+    /**
+     * @brief Genera una respuesta HTTP 401 cuando la autenticación es requerida o el token Bearer no es válido.
+     *
+     * @param request solicitud HTTP que requiere autenticación.
+     * @param response respuesta HTTP en la que se escribe el error.
+     * @param authenticationException excepción producida durante el proceso de autenticación.
+     * @return no devuelve ningún valor.
+     */
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authenticationException) throws IOException {
@@ -27,6 +45,6 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
                 response,
                 HttpStatus.UNAUTHORIZED,
                 "UNAUTHORIZED",
-                "Authentication is required or the provided Bearer token is invalid");
+                "Autenticación requerida o token Bearer inválido.");
     }
 }

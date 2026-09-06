@@ -2,6 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
 
+/**
+ * Presenta la identidad visual de PlayHub con opción de enlace y formato compacto.
+ * @param {Object} props propiedades del componente
+ * @param {string} [props.href="/catalog"] ruta de destino del enlace
+ * @param {boolean} [props.compact=false] indica si solo se muestra el logotipo
+ * @param {string} [props.className=""] clases CSS adicionales
+ * @returns {JSX.Element} identidad visual de PlayHub renderizada 
+ */
 export default function Brand({ href = "/catalog", compact = false, className = "" }) {
   const content = (
     <>

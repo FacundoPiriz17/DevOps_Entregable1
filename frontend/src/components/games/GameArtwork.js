@@ -6,6 +6,15 @@ import { LuGamepad2 } from "react-icons/lu";
 import { gameImage, gameImageAlt } from "@/lib/games";
 import { cn } from "@/lib/cn";
 
+/**
+ * Presenta la imagen de un videojuego con adaptación según el tipo de contenido.
+ * @param {Object} props propiedades del componente
+ * @param {Object} props.game información del videojuego
+ * @param {string} [props.type="portada"] tipo de imagen a mostrar
+ * @param {string} [props.className=""] clases CSS adicionales
+ * @param {boolean} [props.priority=false] indica si la imagen debe cargarse con prioridad
+ * @returns {JSX.Element} imagen o marcador visual del videojuego renderizado 
+ */
 export default function GameArtwork({ game, type = "portada", className = "", priority = false }) {
   const image = gameImage(game, type);
   const [failedUrl, setFailedUrl] = useState(null);

@@ -30,6 +30,12 @@ const userLinks = [
   { href: "/cart", label: "Carrito", icon: LuShoppingCart, count: "cart" },
 ];
 
+/**
+ * Presenta la estructura principal de la aplicación con navegación, perfil y contenido.
+ * @param {Object} props propiedades del componente
+ * @param {React.ReactNode} props.children contenido principal de la aplicación
+ * @returns {JSX.Element} estructura principal de la aplicación renderizada 
+ */
 export default function AppShell({ children }) {
   const pathname = usePathname();
   const { authenticated, ready, user, isUser, isAdmin, logout } = useAuth();

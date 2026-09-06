@@ -16,6 +16,14 @@ const sizes = {
   large: "min-h-12.5 px-5 text-base",
 };
 
+/**
+ * Genera las clases CSS para un botón según su variante y tamaño.
+ * @param {Object} [options={}] opciones de configuración del botón 
+ * @param {string} [options.variant="primary"] variante visual del botón
+ * @param {string} [options.size="medium"] tamaño del botón
+ * @param {string} [options.className] clases CSS adicionales
+ * @returns {string} clases CSS combinadas para el botón
+ */
 export function buttonClasses({ variant = "primary", size = "medium", className } = {}) {
   return cn(
     "inline-flex items-center justify-center gap-2 rounded-xl border-0 font-semibold leading-none transition duration-200 hover:-translate-y-0.5 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-brand-cyan/30 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0 [&_svg]:size-4.5",
@@ -24,7 +32,17 @@ export function buttonClasses({ variant = "primary", size = "medium", className 
     className,
   );
 }
-
+/**
+ * Presenta un botón con variantes visuales y estado de carga.
+ * @param {Object} props propiedades del componente
+ * @param {React.ReactNode} props.children contenido mostrado dentro del botón
+ * @param {string} [props.variant="primary"] variante visual del botón
+ * @param {string} [props.size="medium"] tamaño del botón
+ * @param {boolean} [props.loading=false] indica si el botón está procesando una operación
+ * @param {string} [props.className=""] clases CSS adicionales
+ * @param {boolean} [props.disabled] indica si el botón está deshabilitado
+ * @returns {JSX.Element} botón renderizado
+ */
 export default function Button({
   children,
   variant = "primary",

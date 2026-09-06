@@ -1,5 +1,15 @@
 package com.devops.backend.modules.cart.service;
 
+/**
+ * @file CartService.java
+ * @brief Gestiona las operaciones relacionadas con el carrito de compras de los usuarios.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 import com.devops.backend.common.exception.ApiException;
 import com.devops.backend.modules.cart.dto.CartItemResponse;
 import com.devops.backend.modules.cart.entity.CartItem;
@@ -18,6 +28,10 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * @brief Proporciona la lógica necesaria para añadir, consultar, eliminar y comprar juegos del carrito.
+ *
+ */
 @Service
 public class CartService {
     private final CartItemRepository cartItemRepository;
@@ -35,6 +49,15 @@ public class CartService {
         this.libraryService = libraryService;
     }
 
+    /**
+     * @brief Añade un juego disponible para compra al carrito del usuario.
+     *
+     * @param userEmail correo electrónico del usuario propietario del carrito.
+     * @param gameId identificador del juego que se desea añadir.
+     * @return información del juego añadido al carrito.
+     * @throws ApiException si el juego no existe, no está disponible para compra,
+     *                      ya está en la biblioteca o ya está en el carrito.
+     */
     @Transactional
     public CartItemResponse add(String userEmail, Long gameId) {
         Game game = requirePurchasableGame(gameId);
@@ -48,6 +71,12 @@ public class CartService {
         return CartItemResponse.from(game);
     }
 
+    /**
+     * @brief Obtiene todos los juegos que se encuentran en el carrito del usuario.
+     *
+     * @param userEmail correo electrónico del usuario propietario del carrito.
+     * @return lista de juegos incluidos en el carrito.
+     */
     @Transactional(readOnly = true)
     public List<CartItemResponse> list(String userEmail) {
         List<CartItem> items = cartItemRepository.findByIdUserEmail(userEmail);
@@ -58,6 +87,14 @@ public class CartService {
                 .filter(java.util.Objects::nonNull).map(CartItemResponse::from).toList();
     }
 
+    /**
+     * @brief Elimina un juego del carrito del usuario.
+     *
+     * @param userEmail correo electrónico del usuario propietario del carrito.
+     * @param gameId identificador del juego que se desea eliminar.
+     * @return no devuelve ningún valor.
+     * @throws ApiException si el juego no se encuentra en el carrito.
+     */
     @Transactional
     public void remove(String userEmail, Long gameId) {
         CartItemId id = new CartItemId(gameId, userEmail);
@@ -67,6 +104,13 @@ public class CartService {
         cartItemRepository.deleteById(id);
     }
 
+    /**
+     * @brief Procesa la compra de todos los juegos incluidos en el carrito y los añade a la biblioteca del usuario.
+     *
+     * @param userEmail correo electrónico del usuario que realiza la compra.
+     * @return lista de juegos adquiridos e incorporados a la biblioteca.
+     * @throws ApiException si el carrito está vacío o alguno de los juegos no puede añadirse a la biblioteca.
+     */
     @Transactional
     public List<LibraryEntryResponse> checkout(String userEmail) {
         List<CartItem> items = cartItemRepository.findByIdUserEmail(userEmail);
@@ -78,6 +122,13 @@ public class CartService {
         return purchased;
     }
 
+    /**
+     * @brief Busca un juego y comprueba que esté disponible para su compra.
+     *
+     * @param gameId identificador del juego que se desea comprobar.
+     * @return juego disponible para la compra.
+     * @throws ApiException si el juego no existe o no está disponible para su compra.
+     */
     private Game requirePurchasableGame(Long gameId) {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> ApiException.notFound("GAME_NOT_FOUND", "Game does not exist"));

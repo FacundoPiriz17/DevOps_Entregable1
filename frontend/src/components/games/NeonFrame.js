@@ -20,11 +20,30 @@ const gamePalettes = {
   "grand theft auto": ["hsl(326, 92%, 62%)", "hsl(190, 94%, 57%)"],
 };
 
+/**
+ * Obtiene la paleta de colores asociada a un videojuego.
+ * @param {Object} game información del videojuego
+ * @returns {Array<string>|undefined} colores de la paleta encontrada
+ */
 function paletteFor(game) {
   const name = game?.name?.toLocaleLowerCase("es") || "";
   return Object.entries(gamePalettes).find(([key]) => name.includes(key))?.[1];
 }
 
+/**
+ * Presenta un marco visual con efecto de neón adaptado al videojuego.
+ * @param {Object} props propiedades del componente
+ * @param {Object} props.game información del videojuego
+ * @param {string} [props.imageType="portada"] tipo de imagen utilizada para obtener la paleta
+ * @param {string} [props.imageUrl] URL personalizada de la imagen
+ * @param {number} [props.radius=22] radio de las esquinas del marco
+ * @param {boolean} [props.activateFromParent=false] indica si el efecto se activa desde el elemento padre
+ * @param {number} [props.speed=380] velocidad utilizada para calcular la duración del efecto
+ * @param {string} [props.className] clases CSS adicionales
+ * @param {Object} [props.style] estilos adicionales del contenedor
+ * @param {React.ReactNode} props.children contenido mostrado dentro del marco
+ * @returns {JSX.Element} marco de neón renderizado
+ */
 export default function NeonFrame({
   game,
   imageType = "portada",

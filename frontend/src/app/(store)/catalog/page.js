@@ -13,6 +13,10 @@ import { pickRandomGames } from "@/lib/games";
 const EMPTY_GAMES = [];
 const EMPTY_CATEGORIES = [];
 
+/**
+ * Presenta el catálogo de videojuegos con búsqueda, filtros y ordenamiento.
+ * @returns {JSX.Element} página renderizada del catálogo
+ */
 export default function CatalogPage() {
   const { user } = useAuth();
   const gamesQuery = useGames();

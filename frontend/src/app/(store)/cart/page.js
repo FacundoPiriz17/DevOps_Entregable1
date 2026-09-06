@@ -16,6 +16,10 @@ import { formatPrice, mergeGames } from "@/lib/games";
 
 const EMPTY_GAMES = [];
 
+/**
+ * Presenta la página del carrito de compras. 
+ * @returns {JSX.Element} página renderizada del carrito
+ */
 export default function CartPage() {
   const router = useRouter();
   const { cart, loading: storeLoading, removeFromCart, checkout } = useStore();
@@ -29,6 +33,11 @@ export default function CartPage() {
   const items = useMemo(() => mergeGames(cart, games), [cart, games]);
   const total = items.reduce((sum, item) => sum + Number(item.price), 0);
 
+  /**
+   * Elimina un videojuego del carrito.
+   * @param {number} gameId identificador del videojuego
+   * @returns {Promise<void>} promesa que representa la operación de eliminación
+   */
   const handleRemove = async (gameId) => {
     setRemoving(gameId);
     let actionError = null;
@@ -40,6 +49,11 @@ export default function CartPage() {
     setRemoving(null);
     if (actionError) notify(actionError.message, "error");
   };
+
+  /**
+   * Confirma la compra de los juegos del carrito y redirige a la biblioteca.
+   * @returns {Promise<void>} promesa que representa la operación de compra
+   */
 
   const handleCheckout = async () => {
     setCheckingOut(true);

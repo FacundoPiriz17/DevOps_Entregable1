@@ -1,3 +1,13 @@
+/**
+ * @file AdminBootstrap.java
+ * @brief Inicializa el administrador principal de la aplicación.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 package com.devops.backend.common.config;
 
 import com.devops.backend.modules.auth.entity.Login;
@@ -14,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 
+/**
+ * @brief Crea el administrador inicial si todavía no existe.
+ *
+ */
 @Component
 public class AdminBootstrap implements CommandLineRunner {
 
@@ -41,6 +55,13 @@ public class AdminBootstrap implements CommandLineRunner {
         this.adminCountry = adminCountry;
     }
 
+    
+    /**
+     * @brief Inicializa el administrador principal si todavía no existe.
+     * 
+     * @param args argumentos recibidos al iniciar la aplicación.
+     * @return no devuelve ningún valor.
+     */
     @Override
     @Transactional
     public void run(String... args) {

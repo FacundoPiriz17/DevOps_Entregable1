@@ -14,6 +14,10 @@ import { formatPrice, mergeGames } from "@/lib/games";
 
 const EMPTY_GAMES = [];
 
+/**
+ * Presenta la lista de videojuegos guardados como deseados.
+ * @returns {JSX.Element} página renderizada de la lista de deseados 
+ */
 export default function WishlistPage() {
   const { wishlist, loading: storeLoading, addToCart, toggleWishlist, inCart, inLibrary } = useStore();
   const { notify } = useToast();
@@ -23,6 +27,12 @@ export default function WishlistPage() {
 
   const items = useMemo(() => mergeGames(wishlist, games), [wishlist, games]);
 
+  /**
+   * Ejecuta una acción sobre un videojuego y notifica los errores producidos.
+   * @param {number} gameId identificador del videojuego 
+   * @param {() => Promise<void>} action función asíncrona que realiza la acción
+   * @returns {Promise<void>} promesa que representa la ejecución de la acción 
+   */
   const runAction = async (gameId, action) => {
     setUpdating(gameId);
     let actionError = null;

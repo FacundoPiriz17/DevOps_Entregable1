@@ -2,6 +2,13 @@ import { LuBadgeCheck, LuGamepad2, LuLibrary, LuSparkles } from "react-icons/lu"
 import * as m from "motion/react-m";
 import Brand from "@/components/brand/Brand";
 
+/**
+ * Presenta la estructura visual compartida de las páginas de autenticación.
+ * @param {Object} props propiedades del componente 
+ * @param {string} props.title título principal del formulario
+ * @param {string} props.subtitle descripción complementaria del formulario
+ * @param {React.ReactNode} props.children contenido principal de autenticación 
+ */
 export default function AuthShell({ title, subtitle, children }) {
   return (
     <main className="grid min-h-dvh bg-surface lg:grid-cols-[minmax(0,1.08fr)_minmax(480px,.92fr)]">

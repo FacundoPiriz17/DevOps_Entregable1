@@ -18,6 +18,12 @@ export const viewport = {
   themeColor: "#050817",
 };
 
+/**
+ * Define la estructura raíz de la aplicación y sus proveedores globales.
+ * @param {Object} props propiedades del componente 
+ * @param {React.ReactNode} props.children contenido de las páginas de la aplicación
+ * @returns {JSX.Element} Estructura HTML raíz de la aplicación.
+ */
 export default function RootLayout({ children }) {
   return (
     <html lang="es">

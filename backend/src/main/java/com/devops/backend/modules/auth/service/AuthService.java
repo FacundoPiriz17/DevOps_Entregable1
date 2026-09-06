@@ -1,5 +1,15 @@
 package com.devops.backend.modules.auth.service;
 
+/**
+ * @file AuthService.java
+ * @brief Gestiona el registro, autenticación y generación de respuestas de autenticación de los usuarios.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 import com.devops.backend.common.exception.ApiException;
 import com.devops.backend.common.security.JwtService;
 import com.devops.backend.modules.auth.dto.AuthResponse;
@@ -20,6 +30,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 
+/**
+ * @brief Proporciona la lógica necesaria para registrar y autenticar usuarios.
+ *
+ */
 @Service
 public class AuthService {
 
@@ -44,6 +58,13 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
+    /**
+     * @brief Registra un nuevo usuario y almacena sus credenciales de forma segura.
+     *
+     * @param request datos necesarios para registrar el nuevo usuario.
+     * @return respuesta con la información del usuario registrado y su autenticación.
+     * @throws ApiException si el correo electrónico ya está registrado.
+     */
     @Transactional
     public AuthResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.email());
@@ -57,6 +78,13 @@ public class AuthService {
         return toAuthResponse(user, Role.USER);
     }
 
+    /**
+     * @brief Autentica un usuario mediante su correo electrónico y contraseña.
+     *
+     * @param request datos necesarios para iniciar sesión.
+     * @return respuesta con la información del usuario autenticado y su token.
+     * @throws ApiException si la cuenta del usuario está desactivada o no se puede determinar su rol.
+     */
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
@@ -74,11 +102,24 @@ public class AuthService {
         return toAuthResponse(user, userRoleService.roleOf(email));
     }
 
+    /**
+     * @brief Genera la respuesta de autenticación con los datos del usuario y su token JWT.
+     *
+     * @param user usuario autenticado del que se obtendrán los datos.
+     * @param role rol asignado al usuario que se incluirá en el token.
+     * @return respuesta de autenticación con la información del usuario y su token JWT.
+     */
     private AuthResponse toAuthResponse(User user, Role role) {
         String token = jwtService.generateToken(user, role);
         return new AuthResponse(token, user.getName(), user.getEmail(), user.getCountry(), role.name());
     }
 
+    /**
+     * @brief Normaliza un correo electrónico eliminando espacios y convirtiéndolo a minúsculas.
+     *
+     * @param email correo electrónico que será normalizado.
+     * @return correo electrónico normalizado.
+     */
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
     }

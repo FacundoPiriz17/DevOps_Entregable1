@@ -1,5 +1,15 @@
 package com.devops.backend.modules.library.controller;
 
+/**
+ * @file LibraryController.java
+ * @brief Gestiona las operaciones relacionadas con la biblioteca personal de los usuarios.
+ * @author Equipo de Desarrollo DevOps
+ * @version 1.0
+ * @date 06/09/2026
+ * 
+ * @copyright Copyright (c) 2026
+ */
+
 import com.devops.backend.common.config.OpenApiConfig;
 import com.devops.backend.common.security.CurrentUser;
 import com.devops.backend.modules.library.dto.LibraryEntryResponse;
@@ -21,6 +31,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/**
+ * @brief Expone los endpoints para gestionar la biblioteca personal y los juegos favoritos del usuario.
+ *
+ */
 @RestController
 @RequestMapping("/api/library")
 @Tag(name = "Library", description = "Gestión de la biblioteca personal")
@@ -35,17 +49,38 @@ public class LibraryController {
         this.currentUser = currentUser;
     }
 
+    /**
+     * @brief Añade un videojuego a la biblioteca del usuario autenticado.
+     *
+     * @param gameId identificador del videojuego que se desea añadir.
+     * @param auth token de autenticación del usuario actual.
+     * @return respuesta HTTP 201 con la información del juego añadido a la biblioteca.
+     */
     @PostMapping("/games/{gameId}")
     public ResponseEntity<LibraryEntryResponse> addGame(@PathVariable Long gameId, JwtAuthenticationToken auth) {
         LibraryEntryResponse response = libraryService.addToLibrary(currentUser.emailFrom(auth), gameId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    /**
+     * @brief Obtiene todos los videojuegos de la biblioteca del usuario autenticado.
+     *
+     * @param auth token de autenticación del usuario actual.
+     * @return lista de videojuegos pertenecientes a la biblioteca del usuario.
+     */
     @GetMapping
     public List<LibraryEntryResponse> listLibrary(JwtAuthenticationToken auth) {
         return libraryService.listLibrary(currentUser.emailFrom(auth));
     }
 
+    /**
+     * @brief Actualiza el estado de favorito de un videojuego de la biblioteca.
+     *
+     * @param gameId identificador del videojuego cuyo estado de favorito se desea actualizar.
+     * @param request datos que indican si el videojuego debe marcarse como favorito.
+     * @param auth token de autenticación del usuario actual.
+     * @return información del videojuego con su nuevo estado de favorito.
+     */
     @PatchMapping("/games/{gameId}/favorite")
     public LibraryEntryResponse setFavorite(@PathVariable Long gameId,
                                             @Valid @RequestBody FavoriteRequest request,

@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 const AUTH_COOKIE = "playhub_session";
 const AUTH_ROUTES = new Set(["/login", "/register"]);
 
+/**
+ * Controla el acceso a las rutas según el estado de autenticación del usuario.
+ * @param {import("next/server").NextRequest} request solicitud recibida por el proxy
+ * @returns {import("next/server").NextResponse} respuesta de redirección o continuación de la solicitud
+ */
 export function proxy(request) {
   const { pathname } = request.nextUrl;
   const authenticated = Boolean(request.cookies.get(AUTH_COOKIE)?.value);

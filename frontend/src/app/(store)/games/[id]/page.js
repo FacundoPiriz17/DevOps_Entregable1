@@ -22,6 +22,10 @@ import { useToast } from "@/context/ToastContext";
 import { useGame } from "@/hooks/useCatalog";
 import { formatDate, formatPrice } from "@/lib/games";
 
+/**
+ * Presenta los detalles de un videojuego y permite gestionar sus acciones.
+ * @returns {JSX.Element} página renderizada con los detalles del videojuego
+ */
 export default function GameDetailPage() {
   const { id } = useParams();
   const { isUser } = useAuth();
@@ -46,6 +50,12 @@ export default function GameDetailPage() {
   const owned = inLibrary(game.id);
   const wished = inWishlist(game.id);
 
+  /**
+   * Ejecuta una acción del videojuego y notifica los errores producidos.
+   * @param {string} name nombre de la acción que se está ejecutando 
+   * @param {() => Promise<void>} action función asíncrona que realiza la acción
+   * @returns {Promise<void>} promesa que representa la ejecución de la acción
+   */
   const runAction = async (name, action) => {
     setActionLoading(name);
     let actionError = null;
