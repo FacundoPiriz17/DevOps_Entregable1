@@ -1,6 +1,8 @@
 # PlayHub - DevOps Entregable 1
 
-Proyecto académico de una tienda de videojuegos, con backend en Spring Boot, frontend en Next.js y base de datos PostgreSQL. Incluye migraciones versionadas con Flyway, autenticación JWT, y despliegue en Kubernetes con estrategia Blue/Green.
+Proyecto académico de una tienda de videojuegos, con backend en Spring Boot, frontend en Next.js y base de datos PostgreSQL.
+
+Incluye migraciones versionadas con Flyway, autenticación mediante JWT, contenedores Docker y despliegue en Kubernetes utilizando una estrategia Blue/Green.
 
 La aplicación está compuesta por:
 
@@ -15,7 +17,9 @@ La aplicación está compuesta por:
 - **Estrategia de despliegue:** Blue/Green
 - **Documentación técnica:** Doxygen
 
-El proyecto incluye scripts para automatizar el despliegue, cambio de versión y limpieza del entorno Kubernetes tanto en **Windows PowerShell** como en **Linux/macOS**.
+El proyecto incluye scripts para automatizar el despliegue, cambio de slot y limpieza del entorno Kubernetes tanto en **Windows PowerShell** como en **Linux/macOS**.
+
+---
 
 ## Arquitectura
 
@@ -48,14 +52,14 @@ El proyecto incluye scripts para automatizar el despliegue, cambio de versión y
                          └─────────────────────┘
 ```
 
-En Kubernetes se utilizan además:
+En Kubernetes se mantienen dos slots independientes:
 
 ```text
                     ┌────────────────────┐
                     │   Service estable  │
                     └─────────┬──────────┘
                               │
-                     selector: slot
+                       selector: slot
                               │
                ┌──────────────┴──────────────┐
                │                             │
@@ -68,54 +72,128 @@ En Kubernetes se utilizan además:
 
 El cambio Blue/Green se realiza modificando el selector `slot` de los Services estables de frontend y backend.
 
+---
+
 ## Requisitos previos
 
-- [Docker](https://www.docker.com/) y Docker Compose (para correr la app localmente).
-- Para el despliegue en Kubernetes: [minikube](https://minikube.sigs.k8s.io/) (u otro cluster) y `kubectl`.
+### Aplicación local
 
-## Cómo correr la aplicación (local, con Docker Compose)
+- [Docker](https://www.docker.com/)
+- Docker Compose
 
-1. Copiar `.env.example` a `.env` y completar las variables:
+### Kubernetes
 
-   ```bash
-   cp .env.example .env
-   ```
+- [Docker](https://www.docker.com/)
+- [Minikube](https://minikube.sigs.k8s.io/)
+- `kubectl`
 
-   Variables requeridas:
-   - `DB_PASSWORD`: contraseña de PostgreSQL.
-   - `JWT_SECRET`: secreto usado para firmar los tokens JWT.
-   - `ADMIN_EMAIL` / `ADMIN_PASSWORD`: credenciales del usuario administrador que se crea al iniciar.
+Comprobar las instalaciones:
 
-2. Levantar los servicios:
+```bash
+docker --version
+minikube version
+kubectl version --client
+```
 
-   ```bash
-   docker compose up --build
-   ```
+---
 
-   Esto levanta:
-   - **PostgreSQL** en el puerto `5433`.
-   - **Backend** (Spring Boot) en `http://localhost:8080`.
-   - **Frontend** (Next.js) en `http://localhost:5745`.
+# Ejecución local con Docker Compose
 
-   El modo `watch` de Docker Compose está habilitado: los cambios en `backend/src` y `frontend/` se sincronizan automáticamente en los contenedores.
+Crear el archivo `.env` a partir de `.env.example`.
 
-## Cómo probar la aplicación
+### Linux/macOS
 
-- **Frontend**: abrir `http://localhost:5745` en el navegador y navegar la tienda (registro/login, catálogo de juegos, biblioteca del usuario, administración según el rol).
-- **API / Swagger UI**: con el backend corriendo, la documentación interactiva de la API REST está disponible en:
+```bash
+cp .env.example .env
+```
 
-  ```text
-  http://localhost:8080/swagger-ui.html
-  ```
+### Windows PowerShell
 
-  Ahí se puede ver cada endpoint, probarlo directamente, y autenticar las peticiones protegidas con el Bearer token JWT obtenido al hacer login.
+```powershell
+Copy-Item .env.example .env
+```
 
-- **Usuario administrador**: se crea automáticamente al iniciar el backend, usando las credenciales `ADMIN_EMAIL` / `ADMIN_PASSWORD` definidas en `.env`.
-- **Escenarios de comportamiento (BDD)**: en `features/` hay especificaciones Gherkin (`.feature`) que describen los flujos principales de la aplicación (registro/login, catálogo, biblioteca, administración de usuarios y juegos), útiles como guía para probar la app manualmente.
+Completar las variables requeridas:
 
-## Usuarios de prueba
+```env
+DB_PASSWORD=
+JWT_SECRET=
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
+```
 
-La migración de datos de demostración incluye los siguientes usuarios:
+Variables:
+
+- `DB_PASSWORD`: contraseña de PostgreSQL.
+- `JWT_SECRET`: secreto utilizado para firmar los JWT.
+- `ADMIN_EMAIL`: correo del administrador inicial.
+- `ADMIN_PASSWORD`: contraseña del administrador inicial.
+
+Luego levantar los servicios:
+
+```bash
+docker compose up --build
+```
+
+Para detenerlos:
+
+```bash
+docker compose down
+```
+
+---
+
+# Cómo probar la aplicación
+
+## Frontend
+
+Una vez expuesto el frontend:
+
+```text
+http://localhost:5745
+```
+
+Desde allí se pueden probar, según el rol:
+
+- Registro e inicio de sesión.
+- Catálogo de juegos.
+- Carrito.
+- Lista de deseados.
+- Biblioteca.
+- Administración de juegos.
+- Administración de usuarios.
+
+---
+
+## Swagger UI
+
+La documentación interactiva del backend está disponible en:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+PlayHub utiliza JWT para la autenticación.
+
+Al iniciar sesión, el backend almacena el JWT en una cookie HttpOnly llamada:
+
+```text
+playhub_session
+```
+
+El backend también soporta autenticación mediante:
+
+```http
+Authorization: Bearer <token>
+```
+
+La aplicación web utiliza principalmente la cookie de sesión.
+
+---
+
+# Usuarios de prueba
+
+La migración `V2__demo_data.sql` incluye los siguientes usuarios:
 
 | Nombre | Email | Rol | Contraseña |
 |---|---|---|---|
@@ -124,15 +202,27 @@ La migración de datos de demostración incluye los siguientes usuarios:
 | Agostina | `agostina@playhub.test` | Usuario general | `PlayHub123` |
 | Agustín | `agustin@playhub.test` | Usuario general | `PlayHub123` |
 
-### Usuarios administradores
+## Administradores
 
-Permiten probar funcionalidades administrativas, como la gestión de juegos y usuarios.
+Permiten probar funcionalidades administrativas como:
 
-### Usuarios generales
+- Gestión de juegos.
+- Gestión de usuarios.
+- Operaciones protegidas por rol administrador.
 
-Permiten probar los flujos habituales de la tienda, incluyendo catálogo, biblioteca, deseados y carrito.
+## Usuarios generales
 
-## Despliegue en Kubernetes con Minikube
+Permiten probar:
+
+- Catálogo.
+- Biblioteca.
+- Deseados.
+- Carrito.
+- Compra de juegos.
+
+---
+
+# Despliegue en Kubernetes con Minikube
 
 ## 1. Iniciar Minikube utilizando Docker
 
@@ -164,7 +254,7 @@ Si fuera necesario:
 kubectl config use-context minikube
 ```
 
-Comprobar conexión:
+Comprobar la conexión:
 
 ```bash
 kubectl cluster-info
@@ -172,13 +262,13 @@ kubectl cluster-info
 
 ---
 
-## Desplegar PlayHub
+# Desplegar PlayHub
 
 Los scripts de despliegue realizan automáticamente:
 
-1. Validación de los manifiestos.
+1. Validación de los manifiestos Kubernetes.
 2. Construcción de las imágenes Docker.
-3. Carga de las imágenes dentro del cluster local.
+3. Carga de las imágenes en el runtime del cluster.
 4. Despliegue de PostgreSQL.
 5. Espera hasta que PostgreSQL esté disponible.
 6. Creación del ConfigMap con las migraciones SQL.
@@ -187,6 +277,7 @@ Los scripts de despliegue realizan automáticamente:
 9. Despliegue del slot Blue.
 10. Opcionalmente, despliegue del slot Green.
 11. Verificación del estado de los Deployments.
+12. Inicio automático de los `port-forward` del frontend y backend.
 
 ---
 
@@ -198,13 +289,13 @@ Dar permisos de ejecución la primera vez:
 chmod +x scripts/*.sh
 ```
 
-Desplegar únicamente Blue:
+### Desplegar solamente Blue
 
 ```bash
 ./scripts/deploy.sh --cluster-type minikube
 ```
 
-Desplegar Blue y Green:
+### Desplegar Blue y Green
 
 ```bash
 ./scripts/deploy.sh --cluster-type minikube --deploy-green
@@ -214,13 +305,13 @@ Desplegar Blue y Green:
 
 ## Windows PowerShell
 
-Desplegar únicamente Blue:
+### Desplegar solamente Blue
 
 ```powershell
 .\scripts\deploy.ps1 -ClusterType minikube
 ```
 
-Desplegar Blue y Green:
+### Desplegar Blue y Green
 
 ```powershell
 .\scripts\deploy.ps1 -ClusterType minikube -DeployGreen
@@ -228,15 +319,17 @@ Desplegar Blue y Green:
 
 ---
 
-## Opciones adicionales de `deploy`
+# Opciones adicionales de deploy
 
-### Linux/macOS
+## Linux/macOS
+
+Mostrar ayuda:
 
 ```bash
 ./scripts/deploy.sh --help
 ```
 
-Opciones disponibles:
+Opciones principales:
 
 ```text
 --deploy-green
@@ -245,20 +338,31 @@ Opciones disponibles:
 --frontend-api-url
 --skip-build
 --skip-image-load
+--no-port-forward
 ```
 
-Por ejemplo:
+Ejemplo:
 
 ```bash
-./scripts/deploy.sh 
-  --cluster-type minikube 
-  --deploy-green 
+./scripts/deploy.sh \
+  --cluster-type minikube \
+  --deploy-green \
   --frontend-api-url http://localhost:8080
 ```
 
-### Windows PowerShell
+### No iniciar port-forward automáticamente
 
-Los equivalentes principales son:
+```bash
+./scripts/deploy.sh \
+  --cluster-type minikube \
+  --no-port-forward
+```
+
+---
+
+## Windows PowerShell
+
+Opciones equivalentes:
 
 ```text
 -DeployGreen
@@ -267,18 +371,81 @@ Los equivalentes principales son:
 -FrontendApiUrl
 -SkipBuild
 -SkipImageLoad
+-NoPortForward
+```
+
+Ejemplo:
+
+```powershell
+.\scripts\deploy.ps1 `
+  -ClusterType minikube `
+  -DeployGreen `
+  -FrontendApiUrl http://localhost:8080
 ```
 
 ---
 
-## Estrategia Blue/Green
+# Port-forward
 
-PlayHub mantiene dos versiones independientes de frontend y backend:
+Por defecto, los scripts `deploy.sh` y `deploy.ps1` crean automáticamente:
 
-| Slot | Backend | Frontend |
-|---|---|---|
-| Blue | `playhub-backend-blue` | `playhub-frontend-blue` |
-| Green | `playhub-backend-green` | `playhub-frontend-green` |
+```text
+playhub-backend  -> localhost:8080
+playhub-frontend -> localhost:5745
+```
+
+Por lo tanto, después de ejecutar `deploy` normalmente **no es necesario ejecutar manualmente `kubectl port-forward`**.
+
+Los PID y logs de estos procesos se almacenan en:
+
+```text
+logs/port-forward-backend.pid
+logs/port-forward-backend.log
+
+logs/port-forward-frontend.pid
+logs/port-forward-frontend.log
+```
+
+---
+
+## Port-forward manual
+
+Solo es necesario si el despliegue se realizó con:
+
+### Linux/macOS
+
+```text
+--no-port-forward
+```
+
+### PowerShell
+
+```text
+-NoPortForward
+```
+
+En ese caso:
+
+```bash
+kubectl port-forward service/playhub-backend 8080:8080
+```
+
+y en otra terminal:
+
+```bash
+kubectl port-forward service/playhub-frontend 5745:5745
+```
+
+---
+
+# Estrategia Blue/Green
+
+PlayHub mantiene dos slots independientes para frontend y backend:
+
+| Slot | Backend | Frontend | Imagen |
+|---|---|---|---|
+| Blue | `playhub-backend-blue` | `playhub-frontend-blue` | `v1.0` |
+| Green | `playhub-backend-green` | `playhub-frontend-green` | `v2.0` |
 
 Los Services estables son:
 
@@ -287,37 +454,337 @@ playhub-backend
 playhub-frontend
 ```
 
-Estos Services seleccionan los Pods utilizando la etiqueta:
+Inicialmente apuntan a:
 
 ```yaml
 slot: blue
 ```
 
-o:
+Para activar Green se modifica el selector a:
 
 ```yaml
 slot: green
+```
+
+Esto permite cambiar el tráfico sin cambiar la URL utilizada por los clientes.
+
+> **Nota:** los tags `v1.0` y `v2.0` representan imágenes independientes para los slots Blue y Green. Si ambas imágenes se construyen durante la misma ejecución de `deploy`, pueden contener el mismo código fuente. Para demostrar un cambio real de versión se debe construir cada imagen desde la versión correspondiente del código.
+
+---
+
+# Cambiar de slot
+
+> **Importante:** el slot destino debe estar desplegado previamente. Para utilizar Green primero se debe ejecutar `deploy` con `-DeployGreen` o `--deploy-green`.
+
+## Activar Green
+
+### Linux/macOS
+
+```bash
+./scripts/switch-slot.sh green
+```
+
+### Windows PowerShell
+
+```powershell
+.\scripts\switch-slot.ps1 green
+```
+
+---
+
+## Volver a Blue
+
+### Linux/macOS
+
+```bash
+./scripts/switch-slot.sh blue
+```
+
+### Windows PowerShell
+
+```powershell
+.\scripts\switch-slot.ps1 blue
+```
+
+---
+
+## Verificar el slot activo
+
+```bash
+kubectl get service playhub-backend playhub-frontend \
+  -o custom-columns='SERVICE:.metadata.name,SLOT:.spec.selector.slot'
+```
+
+Ejemplo:
+
+```text
+SERVICE             SLOT
+playhub-backend     blue
+playhub-frontend    blue
+```
+
+---
+
+# Port-forward después de un switch
+
+Si los `port-forward` fueron creados por `deploy.sh` o `deploy.ps1`, los scripts `switch-slot` los reinician automáticamente para que apunten a los Pods del nuevo slot.
+
+Por lo tanto, normalmente **no es necesario reiniciarlos manualmente**.
+
+Solo será necesario hacerlo si fueron creados manualmente fuera de los scripts.
+
+---
+
+# Migraciones con Flyway
+
+Las migraciones se encuentran en:
+
+```text
+backend/src/main/resources/db/migration/
+```
+
+Actualmente existen:
+
+```text
+V1__init.sql
+V2__demo_data.sql
+```
+
+Durante el despliegue Kubernetes:
+
+1. Los scripts crean el ConfigMap:
+
+```text
+playhub-migration-sql
+```
+
+2. Los archivos SQL son montados dentro del contenedor Flyway.
+
+3. Se ejecuta el Job:
+
+```text
+playhub-migrations
+```
+
+4. Flyway aplica automáticamente las migraciones pendientes.
+
+Comprobar el Job:
+
+```bash
+kubectl get jobs
+```
+
+Ver logs:
+
+```bash
+kubectl logs job/playhub-migrations
+```
+
+Describir el Job:
+
+```bash
+kubectl describe job playhub-migrations
+```
+
+Flyway está deshabilitado dentro del backend desplegado en Kubernetes mediante:
+
+```text
+SPRING_FLYWAY_ENABLED=false
+```
+
+De esta manera, la responsabilidad de ejecutar migraciones queda separada del arranque de la aplicación.
+
+---
+
+# PostgreSQL
+
+PostgreSQL se despliega mediante:
+
+```text
+playhub-postgres
+```
+
+El Service utilizado por el backend es:
+
+```text
+playhub-db
+```
+
+Puerto interno:
+
+```text
+5432
+```
+
+La base utiliza un PersistentVolumeClaim:
+
+```text
+playhub-postgres-data
+```
+
+con:
+
+```text
+2Gi
+```
+
+de almacenamiento solicitado.
+
+Comprobar:
+
+```bash
+kubectl get deployment playhub-postgres
+kubectl get service playhub-db
+kubectl get pvc
+```
+
+---
+
+# Comprobar el despliegue
+
+Después de ejecutar `deploy`:
+
+```bash
+kubectl get pods
+```
+
+```bash
+kubectl get deployments
+```
+
+```bash
+kubectl get services
+```
+
+```bash
+kubectl get jobs
+```
+
+```bash
+kubectl get pvc
+```
+
+También se puede utilizar:
+
+```bash
+kubectl get all
+```
+
+---
+
+# Diagnóstico
+
+## Ver Pods
+
+```bash
+kubectl get pods -o wide
+```
+
+## Describir un Pod
+
+```bash
+kubectl describe pod <nombre-pod>
+```
+
+## Logs del backend Blue
+
+```bash
+kubectl logs deployment/playhub-backend-blue
+```
+
+## Logs del backend Green
+
+```bash
+kubectl logs deployment/playhub-backend-green
+```
+
+## Logs del frontend Blue
+
+```bash
+kubectl logs deployment/playhub-frontend-blue
+```
+
+## Logs del frontend Green
+
+```bash
+kubectl logs deployment/playhub-frontend-green
+```
+
+## Logs de PostgreSQL
+
+```bash
+kubectl logs deployment/playhub-postgres
+```
+
+## Eventos Kubernetes
+
+```bash
+kubectl get events --sort-by=.lastTimestamp
+```
+
+---
+
+# Limpieza del entorno
+
+El proyecto incluye scripts para eliminar exclusivamente los recursos Kubernetes pertenecientes a PlayHub.
+
+Por defecto, el PVC de PostgreSQL se conserva para no perder los datos.
+
+---
+
+## Windows PowerShell
+
+### Limpiar recursos manteniendo PostgreSQL
+
+```powershell
+.\scripts\cleanup.ps1
+```
+
+### Eliminar también los datos de PostgreSQL
+
+```powershell
+.\scripts\cleanup.ps1 -DeleteData
+```
+
+### Eliminar datos e imágenes Docker/Minikube
+
+```powershell
+.\scripts\cleanup.ps1 -DeleteData -RemoveImages
 ```
 
 ---
 
 ## Linux/macOS
 
+### Limpiar recursos manteniendo PostgreSQL
+
 ```bash
-./scripts/switch-slot.sh green
+./scripts/cleanup.sh
 ```
 
-## Windows PowerShell
+### Eliminar también PostgreSQL
 
-```powershell
-.\scripts\switch-slot.ps1 green
+```bash
+./scripts/cleanup.sh --delete-data
 ```
 
-> ACLARACIÓN: La versión green tuvo que haber sido desplegada previamente para que el script switch-slot.ps1
+### Eliminar datos e imágenes
 
-De esta forma el tráfico puede cambiar entre ambas versiones sin modificar la URL utilizada por el cliente.
+```bash
+./scripts/cleanup.sh --delete-data --remove-images
+```
 
-## Flujo completo recomendado para una demo
+### Simular la limpieza sin eliminar nada
+
+```bash
+./scripts/cleanup.sh --dry-run
+```
+
+> **Advertencia:** `-DeleteData` / `--delete-data` elimina el PersistentVolumeClaim `playhub-postgres-data` y, por lo tanto, los datos almacenados en PostgreSQL.
+
+---
+
+# Flujo recomendado para una demo
 
 ## 1. Iniciar Minikube
 
@@ -325,7 +792,18 @@ De esta forma el tráfico puede cambiar entre ambas versiones sin modificar la U
 minikube start --driver=docker
 ```
 
-## 2. Desplegar Blue y Green
+---
+
+## 2. Comprobar Minikube
+
+```bash
+minikube status
+kubectl config current-context
+```
+
+---
+
+## 3. Desplegar Blue y Green
 
 ### Windows
 
@@ -339,7 +817,11 @@ minikube start --driver=docker
 ./scripts/deploy.sh --cluster-type minikube --deploy-green
 ```
 
-## 3. Comprobar recursos
+Los port-forward del backend y frontend se crearán automáticamente.
+
+---
+
+## 4. Comprobar recursos
 
 ```bash
 kubectl get pods
@@ -348,90 +830,217 @@ kubectl get jobs
 kubectl get pvc
 ```
 
-## 4. Exponer backend
+Todos los Pods necesarios deberían encontrarse en estado:
 
-```bash
-kubectl port-forward service/playhub-backend 8080:8080
+```text
+Running
 ```
 
-## 5. Exponer frontend
+y el Job:
 
-```bash
-kubectl port-forward service/playhub-frontend 5745:5745
+```text
+playhub-migrations
 ```
 
-## 6. Abrir la aplicación
+debería aparecer como:
+
+```text
+Complete
+```
+
+---
+
+## 5. Abrir PlayHub
 
 ```text
 http://localhost:5745
 ```
 
-## 7. Probar Swagger
+---
+
+## 6. Abrir Swagger
 
 ```text
 http://localhost:8080/swagger-ui.html
 ```
 
-## 8. Iniciar sesión
+---
 
-Por ejemplo:
+## 7. Iniciar sesión
+
+Administrador:
 
 ```text
 facundo@playhub.test
 PlayHub123
 ```
 
-## 9. Verificar el slot actual
+Usuario general:
+
+```text
+agostina@playhub.test
+PlayHub123
+```
+
+---
+
+## 8. Verificar el slot activo
 
 ```bash
-kubectl get service playhub-backend playhub-frontend 
+kubectl get service playhub-backend playhub-frontend \
   -o custom-columns='SERVICE:.metadata.name,SLOT:.spec.selector.slot'
 ```
 
-## 10. Cambiar a Green
+Inicialmente debería mostrarse:
 
-```bash
-./scripts/switch-slot.sh green
+```text
+blue
 ```
 
-o:
+---
+
+## 9. Cambiar a Green
+
+### Windows
 
 ```powershell
 .\scripts\switch-slot.ps1 green
 ```
 
-## 11. Reiniciar los port-forward
+### Linux/macOS
 
 ```bash
-kubectl port-forward service/playhub-backend 8080:8080
+./scripts/switch-slot.sh green
 ```
+
+Comprobar nuevamente:
 
 ```bash
-kubectl port-forward service/playhub-frontend 5745:5745
+kubectl get service playhub-backend playhub-frontend \
+  -o custom-columns='SERVICE:.metadata.name,SLOT:.spec.selector.slot'
 ```
 
-## 12. Mostrar rollback
+Ahora debería aparecer:
 
-```bash
-./scripts/switch-slot.sh blue
+```text
+green
 ```
 
-o:
+---
+
+## 10. Mostrar rollback
+
+Volver a Blue.
+
+### Windows
 
 ```powershell
 .\scripts\switch-slot.ps1 blue
 ```
 
+### Linux/macOS
+
+```bash
+./scripts/switch-slot.sh blue
+```
+
+El tráfico vuelve inmediatamente al slot anterior sin cambiar las URLs utilizadas por el cliente.
+
 ---
 
-## Documentación adicional
+# Estructura Kubernetes
 
-- Documentación técnica generada con Doxygen (arquitectura de backend/frontend, convenciones): ver `docs/`.
-- Manifiestos de Kubernetes: `k8s/`.
+Los manifiestos se encuentran en:
 
-### Documentación con Doxygen
+```text
+k8s/
+```
 
-El proyecto incluye un archivo:
+Incluyen:
+
+```text
+configmap.yaml
+secret.yaml
+
+postgres-pvc.yaml
+postgres-service.yaml
+postgres-deployment.yaml
+
+migration-job.yaml
+
+backend-service.yaml
+backend-blue-deployment.yaml
+backend-green-deployment.yaml
+
+frontend-service.yaml
+frontend-blue-deployment.yaml
+frontend-green-deployment.yaml
+```
+
+---
+
+# Scripts
+
+Los scripts están disponibles en:
+
+```text
+scripts/
+```
+
+## Despliegue
+
+```text
+deploy.sh
+deploy.ps1
+```
+
+## Cambio Blue/Green
+
+```text
+switch-slot.sh
+switch-slot.ps1
+```
+
+## Limpieza
+
+```text
+cleanup.sh
+cleanup.ps1
+```
+
+Existe documentación adicional sobre los scripts en:
+
+```text
+scripts/README.md
+```
+
+---
+
+# Escenarios BDD
+
+La carpeta:
+
+```text
+features/
+```
+
+contiene especificaciones Gherkin utilizadas para describir los principales comportamientos del sistema.
+
+Incluyen escenarios relacionados con:
+
+- Autenticación.
+- Catálogo.
+- Biblioteca.
+- Carrito.
+- Deseados.
+- Administración de usuarios.
+- Administración de juegos.
+
+---
+
+# Documentación con Doxygen
+
+El proyecto incluye:
 
 ```text
 Doxyfile
@@ -439,11 +1048,11 @@ Doxyfile
 
 Para generar la documentación:
 
-```text
+```bash
 doxygen Doxyfile
 ```
 
-El resultado se genera en:
+La documentación se genera en:
 
 ```text
 docs/generated/html/
@@ -453,4 +1062,96 @@ La página principal puede abrirse desde:
 
 ```text
 docs/generated/html/index.html
+```
+
+El Doxyfile procesa documentación de:
+
+```text
+README.md
+docs/
+backend/src/main/java/
+frontend/src/
+```
+
+---
+
+# Resumen de puertos en Kubernetes
+
+| Componente | Puerto |
+|---|---:|
+| Frontend | `5745` |
+| Backend | `8080` |
+| PostgreSQL | `5432` |
+
+Con los port-forward automáticos:
+
+```text
+http://localhost:5745
+http://localhost:8080
+```
+
+---
+
+# Resumen rápido
+
+### Iniciar Minikube
+
+```bash
+minikube start --driver=docker
+```
+
+### Deploy Blue + Green
+
+Windows:
+
+```powershell
+.\scripts\deploy.ps1 -ClusterType minikube -DeployGreen
+```
+
+Linux/macOS:
+
+```bash
+./scripts/deploy.sh --cluster-type minikube --deploy-green
+```
+
+### Activar Green
+
+Windows:
+
+```powershell
+.\scripts\switch-slot.ps1 green
+```
+
+Linux/macOS:
+
+```bash
+./scripts/switch-slot.sh green
+```
+
+### Rollback a Blue
+
+Windows:
+
+```powershell
+.\scripts\switch-slot.ps1 blue
+```
+
+Linux/macOS:
+
+```bash
+./scripts/switch-slot.sh blue
+```
+
+### Limpiar
+
+Windows:
+
+```powershell
+.\scripts\cleanup.ps1
+```
+
+Linux/macOS:
+
+```bash
+./scripts/cleanup.sh
 ```
