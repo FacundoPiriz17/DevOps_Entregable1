@@ -44,7 +44,9 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const handleUnauthorized = () => {
       clearSession();
-      router.replace("/login?expired=1");
+      api.auth.logout().catch(() => {}).finally(() => {
+        router.replace("/login?expired=1");
+      });
     };
 
     window.addEventListener("playhub:unauthorized", handleUnauthorized);

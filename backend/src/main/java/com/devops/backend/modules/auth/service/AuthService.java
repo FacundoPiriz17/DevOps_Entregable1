@@ -12,6 +12,7 @@ package com.devops.backend.modules.auth.service;
 
 import com.devops.backend.common.exception.ApiException;
 import com.devops.backend.common.security.JwtService;
+import com.devops.backend.common.util.EmailNormalizer;
 import com.devops.backend.modules.auth.dto.AuthResponse;
 import com.devops.backend.modules.auth.dto.LoginRequest;
 import com.devops.backend.modules.auth.dto.RegisterRequest;
@@ -27,8 +28,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 /**
  * @brief Proporciona la lógica necesaria para registrar y autenticar usuarios.
@@ -121,6 +120,6 @@ public class AuthService {
      * @return correo electrónico normalizado.
      */
     private String normalizeEmail(String email) {
-        return email.trim().toLowerCase(Locale.ROOT);
+        return EmailNormalizer.normalize(email);
     }
 }

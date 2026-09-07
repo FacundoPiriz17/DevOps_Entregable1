@@ -11,6 +11,7 @@ package com.devops.backend.modules.user.service;
  */
 
 import com.devops.backend.common.exception.ApiException;
+import com.devops.backend.common.util.EmailNormalizer;
 import com.devops.backend.modules.user.dto.UserBasicResponse;
 import com.devops.backend.modules.user.entity.User;
 import com.devops.backend.modules.user.repository.UserRepository;
@@ -55,8 +56,9 @@ public class UserAdminService {
      */
     @Transactional(readOnly = true)
     public UserBasicResponse getUser(String email) {
-        User user = findUserOrThrow(email);
-        return UserBasicResponse.from(user, userRoleService.roleOf(email));
+        String normalizedEmail = EmailNormalizer.normalize(email);
+        User user = findUserOrThrow(normalizedEmail);
+        return UserBasicResponse.from(user, userRoleService.roleOf(normalizedEmail));
     }
 
     /**
@@ -68,9 +70,10 @@ public class UserAdminService {
      */
     @Transactional
     public UserBasicResponse deactivate(String email) {
-        User user = findUserOrThrow(email);
+        String normalizedEmail = EmailNormalizer.normalize(email);
+        User user = findUserOrThrow(normalizedEmail);
         user.setActive(false);
-        return UserBasicResponse.from(user, userRoleService.roleOf(email));
+        return UserBasicResponse.from(user, userRoleService.roleOf(normalizedEmail));
     }
 
     /**

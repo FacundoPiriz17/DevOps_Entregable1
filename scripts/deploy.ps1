@@ -12,7 +12,9 @@ param(
     [switch]$SkipImageLoad,
 
     [ValidatePattern("^https?://")]
-    [string]$FrontendApiUrl = "http://localhost:8080"
+    [string]$FrontendApiUrl = "http://localhost:8080",
+
+    [switch]$NoPortForward
 )
 
 $ErrorActionPreference = "Stop"
@@ -363,6 +365,126 @@ function Show-DeploymentDiagnostics {
     & kubectl get events --sort-by=.lastTimestamp
 }
 
+function Stop-TrackedPortForward {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    $pidFile = Join-Path $ProjectRoot "logs\port-forward-$Name.pid"
+
+    if (Test-Path -LiteralPath $pidFile) {
+        $processId = Get-Content -LiteralPath $pidFile -ErrorAction SilentlyContinue
+
+        if (-not [string]::IsNullOrWhiteSpace($processId)) {
+            $existing = Get-Process -Id $processId -ErrorAction SilentlyContinue
+
+            if ($null -ne $existing) {
+                Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+            }
+        }
+
+        Remove-Item -LiteralPath $pidFile -Force -ErrorAction SilentlyContinue
+    }
+}
+
+# Un port-forward anterior puede seguir ocupando el puerto y hacer fallar el bind
+# en silencio, dejando la app inaccesible con ERR_CONNECTION_REFUSED.
+function Clear-StalePortForward {
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$Port
+    )
+
+    $listeners = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
+
+    foreach ($listener in $listeners) {
+        $owner = Get-Process -Id $listener.OwningProcess -ErrorAction SilentlyContinue
+
+        if ($null -eq $owner) { continue }
+
+        if ($owner.ProcessName -notlike "*kubectl*") {
+            Write-Warning "El puerto $Port ya esta ocupado por '$($owner.ProcessName)' (PID $($owner.Id)), que no es un port-forward."
+            Write-Warning "Liberalo o volve a ejecutar con -NoPortForward."
+            return $false
+        }
+
+        Write-Host "Liberando el puerto ${Port}: port-forward previo (PID $($owner.Id))."
+        Stop-Process -Id $owner.Id -Force -ErrorAction SilentlyContinue
+    }
+
+    if ($listeners) { Start-Sleep -Seconds 1 }
+
+    return $true
+}
+
+function Start-TrackedPortForward {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Service,
+
+        [Parameter(Mandatory = $true)]
+        [int]$LocalPort,
+
+        [Parameter(Mandatory = $true)]
+        [int]$RemotePort,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    Stop-TrackedPortForward -Name $Name -ProjectRoot $ProjectRoot
+
+    if (-not (Clear-StalePortForward -Port $LocalPort)) {
+        return $false
+    }
+
+    $logsDir = Join-Path $ProjectRoot "logs"
+    New-Item -ItemType Directory -Force -Path $logsDir | Out-Null
+
+    $pidFile = Join-Path $logsDir "port-forward-$Name.pid"
+    $logFile = Join-Path $logsDir "port-forward-$Name.log"
+
+    $portMapping = "${LocalPort}:${RemotePort}"
+
+    $proc = Start-Process -FilePath "kubectl" `
+        -ArgumentList @("port-forward", "svc/$Service", $portMapping) `
+        -RedirectStandardOutput $logFile `
+        -RedirectStandardError "$logFile.err" `
+        -WindowStyle Hidden `
+        -PassThru
+
+    Set-Content -LiteralPath $pidFile -Value $proc.Id
+
+    $confirmed = $false
+
+    for ($attempt = 0; $attempt -lt 10; $attempt++) {
+        Start-Sleep -Milliseconds 500
+
+        $output = ""
+        if (Test-Path -LiteralPath $logFile) { $output += Get-Content -LiteralPath $logFile -Raw -ErrorAction SilentlyContinue }
+        if (Test-Path -LiteralPath "$logFile.err") { $output += Get-Content -LiteralPath "$logFile.err" -Raw -ErrorAction SilentlyContinue }
+
+        if ($output -match "Forwarding from") {
+            Write-Host "Port-forward activo: svc/$Service -> $portMapping (log: $logFile)"
+            $confirmed = $true
+            break
+        }
+    }
+
+    if (-not $confirmed) {
+        Write-Warning "No se pudo iniciar el port-forward de '$Service'. Revisa $logFile y $logFile.err"
+    }
+
+    return $confirmed
+}
+
 Assert-Command -Name "kubectl"
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
@@ -646,6 +768,29 @@ try {
     Invoke-Kubectl -Arguments @("get", "jobs")
     Invoke-Kubectl -Arguments @("get", "pvc")
     Invoke-Kubectl -Arguments @("get", "services")
+
+    if (-not $NoPortForward) {
+        Write-Host ""
+        Write-Host "Iniciando port-forward de backend y frontend..."
+
+        $backendOk = Start-TrackedPortForward -Name "backend" -Service "playhub-backend" -LocalPort 8080 -RemotePort 8080 -ProjectRoot $projectRoot
+        $frontendOk = Start-TrackedPortForward -Name "frontend" -Service "playhub-frontend" -LocalPort 5745 -RemotePort 5745 -ProjectRoot $projectRoot
+
+        Write-Host ""
+
+        if (-not ($backendOk -and $frontendOk)) {
+            Write-Warning "El despliegue termino, pero algun port-forward no pudo iniciarse (ver mensajes arriba)."
+            Write-Warning "La app NO es accesible desde el navegador hasta que se resuelva."
+            exit 1
+        }
+
+        Write-Host "Frontend disponible en: http://localhost:5745"
+        Write-Host "Backend disponible en:  http://localhost:8080"
+        Write-Host "Para detenerlos: Stop-Process -Id (Get-Content logs\port-forward-backend.pid), (Get-Content logs\port-forward-frontend.pid)"
+    }
+    else {
+        Write-Warning "Se omitio el inicio automatico de port-forward (-NoPortForward)."
+    }
 }
 finally {
     Pop-Location
