@@ -96,53 +96,9 @@ kubectl version --client
 ```
 
 ---
+# Levantar la aplicación:
 
-# Ejecución local con Docker Compose
-
-Crear el archivo `.env` a partir de `.env.example`.
-
-### Linux/macOS
-
-```bash
-cp .env.example .env
-```
-
-### Windows PowerShell
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Completar las variables requeridas:
-
-```env
-DB_PASSWORD=
-JWT_SECRET=
-ADMIN_EMAIL=
-ADMIN_PASSWORD=
-```
-
-Variables:
-
-- `DB_PASSWORD`: contraseña de PostgreSQL.
-- `JWT_SECRET`: secreto utilizado para firmar los JWT.
-- `ADMIN_EMAIL`: correo del administrador inicial.
-- `ADMIN_PASSWORD`: contraseña del administrador inicial.
-
-Luego levantar los servicios:
-
-```bash
-docker compose up --build
-```
-
-Para detenerlos:
-
-```bash
-docker compose down
-```
-
----
-
+## *Revisar README en scripts/README.md*
 # Cómo probar la aplicación
 
 ## Frontend
