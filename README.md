@@ -344,17 +344,17 @@ Opciones principales:
 Ejemplo:
 
 ```bash
-./scripts/deploy.sh \
-  --cluster-type minikube \
-  --deploy-green \
+./scripts/deploy.sh 
+  --cluster-type minikube 
+  --deploy-green 
   --frontend-api-url http://localhost:8080
 ```
 
 ### No iniciar port-forward automáticamente
 
 ```bash
-./scripts/deploy.sh \
-  --cluster-type minikube \
+./scripts/deploy.sh 
+  --cluster-type minikube 
   --no-port-forward
 ```
 
