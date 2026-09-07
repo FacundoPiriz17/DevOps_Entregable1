@@ -57,6 +57,7 @@ export default function GameArtwork({ game, type = "portada", className = "", pr
           quality={45}
           sizes={type === "banner" ? "100vw" : "300px"}
           src={image}
+          unoptimized
         />
       )}
       <Image
@@ -78,6 +79,7 @@ export default function GameArtwork({ game, type = "portada", className = "", pr
           ? "(max-width: 768px) 100vw, 75vw"
           : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"}
         src={image}
+        unoptimized
       />
     </div>
   );
