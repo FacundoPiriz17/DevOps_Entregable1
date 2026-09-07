@@ -36,12 +36,15 @@ public class AuthController {
 
     private final AuthService authService;
     private final Duration sessionDuration;
+    private final boolean cookieSecure;
 
     public AuthController(
             AuthService authService,
-            @Value("${jwt.expiration-minutes:120}") long expirationMinutes) {
+            @Value("${jwt.expiration-minutes:120}") long expirationMinutes,
+            @Value("${app.cookie.secure:true}") boolean cookieSecure) {
         this.authService = authService;
         this.sessionDuration = Duration.ofMinutes(expirationMinutes);
+        this.cookieSecure = cookieSecure;
     }
 
     /**
@@ -102,7 +105,7 @@ public class AuthController {
     private ResponseCookie.ResponseCookieBuilder sessionCookie(String value) {
         return ResponseCookie.from(JwtCookieBearerTokenResolver.COOKIE_NAME, value)
                 .httpOnly(true)
-                .secure(true)
+                .secure(cookieSecure)
                 .sameSite("Strict")
                 .path("/");
     }

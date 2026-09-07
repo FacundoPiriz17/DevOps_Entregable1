@@ -36,7 +36,37 @@ function Invoke-KubectlDelete {
     }
 }
 
+function Stop-TrackedPortForward {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    $pidFile = Join-Path $ProjectRoot "logs\port-forward-$Name.pid"
+
+    if (-not (Test-Path -LiteralPath $pidFile)) {
+        return
+    }
+
+    $processId = Get-Content -LiteralPath $pidFile -ErrorAction SilentlyContinue
+
+    if (-not [string]::IsNullOrWhiteSpace($processId)) {
+        $existing = Get-Process -Id $processId -ErrorAction SilentlyContinue
+
+        if ($null -ne $existing) {
+            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    Remove-Item -LiteralPath $pidFile -Force -ErrorAction SilentlyContinue
+}
+
 Assert-Command -Name "kubectl"
+
+$projectRoot = Split-Path -Parent $PSScriptRoot
 
 $context = (& kubectl config current-context)
 
@@ -70,6 +100,10 @@ $target = "PlayHub en el contexto '$context', namespace '$namespace'"
 if (-not $PSCmdlet.ShouldProcess($target, "Eliminar los recursos desplegados")) {
     return
 }
+
+Write-Host "Deteniendo port-forward de backend y frontend, si existen..."
+Stop-TrackedPortForward -Name "backend" -ProjectRoot $projectRoot
+Stop-TrackedPortForward -Name "frontend" -ProjectRoot $projectRoot
 
 Invoke-KubectlDelete -Kind "deployment" -Names @(
     "playhub-backend-blue",

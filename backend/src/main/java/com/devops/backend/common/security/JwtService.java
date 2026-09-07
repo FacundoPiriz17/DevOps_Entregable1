@@ -14,6 +14,7 @@ import com.devops.backend.modules.user.entity.Role;
 import com.devops.backend.modules.user.entity.User;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.MacAlgorithm;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,8 @@ import java.util.Date;
 
 @Service
 public class JwtService {
+
+    private static final MacAlgorithm SIGNATURE_ALGORITHM = Jwts.SIG.HS384;
 
     private final SecretKey signingKey;
     private final long expirationMinutes;
@@ -50,7 +53,7 @@ public class JwtService {
                 .claim("role", role.name())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
-                .signWith(signingKey)
+                .signWith(signingKey, SIGNATURE_ALGORITHM)
                 .compact();
     }
 

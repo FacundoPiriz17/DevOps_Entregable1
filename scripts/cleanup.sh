@@ -104,7 +104,32 @@ remove_optional_image() {
   fi
 }
 
+stop_tracked_port_forward() {
+  local name="$1"
+  local pid_file="$project_root/logs/port-forward-$name.pid"
+  local pid
+
+  if [[ -f "$pid_file" ]]; then
+    pid="$(cat "$pid_file")"
+
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      if [[ "$dry_run" == true ]]; then
+        echo "DRY-RUN: kill $pid (port-forward $name)"
+      else
+        kill "$pid" 2>/dev/null || true
+      fi
+    fi
+
+    if [[ "$dry_run" == false ]]; then
+      rm -f "$pid_file"
+    fi
+  fi
+}
+
 require_command kubectl
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+project_root="$(cd "$script_dir/.." && pwd)"
 
 current_context="$(kubectl config current-context)"
 
@@ -125,6 +150,10 @@ if [[ "$delete_data" == true ]]; then
 else
   echo "El PVC playhub-postgres-data se conservara. Usa --delete-data para reiniciar tambien la base."
 fi
+
+echo "Deteniendo port-forward de backend y frontend, si existen..."
+stop_tracked_port_forward backend
+stop_tracked_port_forward frontend
 
 delete_resources deployment \
   playhub-backend-blue \

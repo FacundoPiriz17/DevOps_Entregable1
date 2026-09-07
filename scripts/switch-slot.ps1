@@ -72,9 +72,62 @@ function Set-ServiceSlot {
     }
 }
 
+function Restart-TrackedPortForward {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Service,
+
+        [Parameter(Mandatory = $true)]
+        [int]$LocalPort,
+
+        [Parameter(Mandatory = $true)]
+        [int]$RemotePort,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ProjectRoot
+    )
+
+    $pidFile = Join-Path $ProjectRoot "logs\port-forward-$Name.pid"
+
+    if (-not (Test-Path -LiteralPath $pidFile)) {
+        return $false
+    }
+
+    $processId = Get-Content -LiteralPath $pidFile -ErrorAction SilentlyContinue
+
+    if (-not [string]::IsNullOrWhiteSpace($processId)) {
+        $existing = Get-Process -Id $processId -ErrorAction SilentlyContinue
+
+        if ($null -ne $existing) {
+            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+        }
+    }
+
+    $logFile = Join-Path $ProjectRoot "logs\port-forward-$Name.log"
+    $portMapping = "${LocalPort}:${RemotePort}"
+
+    $proc = Start-Process -FilePath "kubectl" `
+        -ArgumentList @("port-forward", "svc/$Service", $portMapping) `
+        -RedirectStandardOutput $logFile `
+        -RedirectStandardError "$logFile.err" `
+        -WindowStyle Hidden `
+        -PassThru
+
+    Set-Content -LiteralPath $pidFile -Value $proc.Id
+
+    Write-Host "Port-forward de '$Service' reiniciado para apuntar al nuevo slot (log: $logFile)."
+
+    return $true
+}
+
 if (-not (Get-Command kubectl -ErrorAction SilentlyContinue)) {
     throw "No se encontro kubectl en PATH."
 }
+
+$projectRoot = Split-Path -Parent $PSScriptRoot
 
 $backendDeployment = "playhub-backend-$Target"
 $frontendDeployment = "playhub-frontend-$Target"
@@ -129,4 +182,9 @@ Invoke-Kubectl -Arguments @(
     "-o=custom-columns=SERVICE:.metadata.name,SLOT:.spec.selector.slot"
 )
 
-Write-Warning "Si utilizas port-forward, detenlo y vuelvelo a iniciar para conectarte a los Pods del nuevo slot."
+$backendRestarted = Restart-TrackedPortForward -Name "backend" -Service "playhub-backend" -LocalPort 8080 -RemotePort 8080 -ProjectRoot $projectRoot
+$frontendRestarted = Restart-TrackedPortForward -Name "frontend" -Service "playhub-frontend" -LocalPort 5745 -RemotePort 5745 -ProjectRoot $projectRoot
+
+if (-not $backendRestarted -or -not $frontendRestarted) {
+    Write-Warning "Si utilizas port-forward manual, detenlo y vuelvelo a iniciar para conectarte a los Pods del nuevo slot."
+}

@@ -8,6 +8,7 @@ cluster_name=""
 skip_build=false
 skip_image_load=false
 frontend_api_url="http://localhost:8080"
+no_port_forward=false
 
 usage() {
   printf '%s\n' \
@@ -20,6 +21,7 @@ usage() {
     "  --frontend-api-url URL      URL publica del backend (default: http://localhost:8080)." \
     "  --skip-build                No reconstruye las imagenes." \
     "  --skip-image-load           No importa las imagenes al runtime del cluster." \
+    "  --no-port-forward           No inicia los kubectl port-forward de backend/frontend." \
     "  -h, --help                  Muestra esta ayuda."
 }
 
@@ -59,6 +61,10 @@ while (($# > 0)); do
       ;;
     --skip-image-load)
       skip_image_load=true
+      shift
+      ;;
+    --no-port-forward)
+      no_port_forward=true
       shift
       ;;
     -h|--help)
@@ -305,6 +311,105 @@ wait_for_job() {
   return 1
 }
 
+stop_tracked_port_forward() {
+  local name="$1"
+  local pid_file="$project_root/logs/port-forward-$name.pid"
+  local pid
+
+  if [[ -f "$pid_file" ]]; then
+    pid="$(cat "$pid_file")"
+
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+    fi
+
+    rm -f "$pid_file"
+  fi
+}
+
+listeners_on_port() {
+  local port="$1"
+
+  if command -v lsof >/dev/null 2>&1; then
+    lsof -ti "tcp:$port" -sTCP:LISTEN 2>/dev/null || true
+  elif command -v netstat >/dev/null 2>&1; then
+    netstat -ano 2>/dev/null \
+      | awk -v suffix=":$port" '$1 == "TCP" && $4 == "LISTENING" && index($2, suffix) == length($2) - length(suffix) + 1 { print $5 }' \
+      | sort -u
+  fi
+}
+
+process_name_of() {
+  local pid="$1"
+
+  if command -v ps >/dev/null 2>&1 && ps -p "$pid" -o comm= 2>/dev/null | grep -q .; then
+    ps -p "$pid" -o comm= 2>/dev/null
+  elif command -v tasklist >/dev/null 2>&1; then
+    tasklist //FI "PID eq $pid" //NH //FO CSV 2>/dev/null | head -n 1 | cut -d, -f1 | tr -d '"'
+  fi
+}
+
+# Un port-forward anterior puede seguir ocupando el puerto y hacer fallar el bind
+# en silencio, dejando la app inaccesible con ERR_CONNECTION_REFUSED.
+free_stale_port_forward() {
+  local port="$1"
+  local pid
+  local name
+
+  for pid in $(listeners_on_port "$port"); do
+    name="$(process_name_of "$pid")"
+
+    if [[ "$name" != *kubectl* ]]; then
+      echo "El puerto $port ya esta ocupado por '$name' (PID $pid), que no es un port-forward." >&2
+      echo "Liberalo o volve a ejecutar con --no-port-forward." >&2
+      return 1
+    fi
+
+    echo "Liberando el puerto $port: port-forward previo (PID $pid)."
+
+    if command -v taskkill >/dev/null 2>&1; then
+      taskkill //F //PID "$pid" >/dev/null 2>&1 || true
+    else
+      kill "$pid" 2>/dev/null || true
+    fi
+  done
+
+  sleep 1
+}
+
+start_tracked_port_forward() {
+  local name="$1"
+  local service="$2"
+  local port_mapping="$3"
+  local pid_file="$project_root/logs/port-forward-$name.pid"
+  local log_file="$project_root/logs/port-forward-$name.log"
+
+  stop_tracked_port_forward "$name"
+
+  if ! free_stale_port_forward "${port_mapping%%:*}"; then
+    return 1
+  fi
+
+  mkdir -p "$project_root/logs"
+
+  kubectl port-forward "svc/$service" "$port_mapping" >"$log_file" 2>&1 &
+  disown
+
+  echo "$!" >"$pid_file"
+
+  for _ in {1..10}; do
+    if grep -q "Forwarding from" "$log_file" 2>/dev/null; then
+      echo "Port-forward activo: svc/$service -> $port_mapping (log: $log_file)"
+      return 0
+    fi
+    sleep 0.5
+  done
+
+  echo "No se pudo iniciar el port-forward de '$service'. Ultimas lineas de $log_file:" >&2
+  tail -n 20 "$log_file" >&2 2>/dev/null || true
+  return 1
+}
+
 require_command kubectl
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -545,3 +650,27 @@ kubectl get pods
 kubectl get jobs
 kubectl get pvc
 kubectl get services
+
+if [[ "$no_port_forward" == false ]]; then
+  echo
+  echo "Iniciando port-forward de backend y frontend..."
+
+  port_forward_failed=false
+
+  start_tracked_port_forward backend playhub-backend 8080:8080 || port_forward_failed=true
+  start_tracked_port_forward frontend playhub-frontend 5745:5745 || port_forward_failed=true
+
+  echo
+
+  if [[ "$port_forward_failed" == true ]]; then
+    echo "El despliegue termino, pero algun port-forward no pudo iniciarse (ver mensajes arriba)." >&2
+    echo "La app NO es accesible desde el navegador hasta que se resuelva." >&2
+    exit 1
+  fi
+
+  echo "Frontend disponible en: http://localhost:5745"
+  echo "Backend disponible en:  http://localhost:8080"
+  echo "Para detenerlos: kill \$(cat logs/port-forward-backend.pid) \$(cat logs/port-forward-frontend.pid)"
+else
+  echo "Aviso: se omitio el inicio automatico de port-forward (--no-port-forward)." >&2
+fi

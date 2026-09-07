@@ -10,6 +10,7 @@
 
 package com.devops.backend.common.config;
 
+import com.devops.backend.common.util.EmailNormalizer;
 import com.devops.backend.modules.auth.entity.Login;
 import com.devops.backend.modules.auth.repository.LoginRepository;
 import com.devops.backend.modules.user.entity.Administrator;
@@ -21,8 +22,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Locale;
 
 /**
  * @brief Crea el administrador inicial si todavía no existe.
@@ -50,7 +49,7 @@ public class AdminBootstrap implements CommandLineRunner {
         this.loginRepository = loginRepository;
         this.administratorRepository = administratorRepository;
         this.passwordEncoder = passwordEncoder;
-        this.adminEmail = adminEmail.trim().toLowerCase(Locale.ROOT);
+        this.adminEmail = EmailNormalizer.normalize(adminEmail);
         this.adminPassword = adminPassword;
         this.adminCountry = adminCountry;
     }

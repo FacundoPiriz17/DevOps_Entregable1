@@ -14,6 +14,36 @@ if ! command -v kubectl >/dev/null 2>&1; then
   exit 1
 fi
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+project_root="$(cd "$script_dir/.." && pwd)"
+
+restart_tracked_port_forward() {
+  local name="$1"
+  local service="$2"
+  local port_mapping="$3"
+  local pid_file="$project_root/logs/port-forward-$name.pid"
+  local log_file="$project_root/logs/port-forward-$name.log"
+  local pid
+
+  if [[ -f "$pid_file" ]]; then
+    pid="$(cat "$pid_file")"
+
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      kill "$pid" 2>/dev/null || true
+    fi
+
+    rm -f "$pid_file"
+
+    kubectl port-forward "svc/$service" "$port_mapping" >"$log_file" 2>&1 &
+    disown
+    echo "$!" >"$pid_file"
+    echo "Port-forward de '$service' reiniciado para apuntar al nuevo slot (log: $log_file)."
+    return 0
+  fi
+
+  return 1
+}
+
 get_service_slot() {
   kubectl get service "$1" -o jsonpath='{.spec.selector.slot}'
 }
@@ -62,4 +92,17 @@ echo "PlayHub ahora utiliza el slot '$target'."
 kubectl get service playhub-backend playhub-frontend \
   -o custom-columns='SERVICE:.metadata.name,SLOT:.spec.selector.slot'
 
-echo "Aviso: si utilizas port-forward, detenlo y vuelvelo a iniciar para conectarte a los Pods del nuevo slot."
+backend_restarted=false
+frontend_restarted=false
+
+if restart_tracked_port_forward backend playhub-backend 8080:8080; then
+  backend_restarted=true
+fi
+
+if restart_tracked_port_forward frontend playhub-frontend 5745:5745; then
+  frontend_restarted=true
+fi
+
+if [[ "$backend_restarted" == false || "$frontend_restarted" == false ]]; then
+  echo "Aviso: si utilizas port-forward manual, detenlo y vuelvelo a iniciar para conectarte a los Pods del nuevo slot."
+fi
